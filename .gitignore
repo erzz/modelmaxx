@@ -1,0 +1,19 @@
+# Compiled binary
+/modelmaxx
+modelmaxx
+*.exe
+
+# Test / build artifacts
+*.test
+*.out
+/dist/
+
+# Editor / OS
+.idea/
+.vscode/
+*.swp
+.DS_Store
+
+# Local env
+.env
+.env.*
