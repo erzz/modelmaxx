@@ -1,0 +1,927 @@
+{
+  "version": 1,
+  "updated": "2026-08-29",
+  "note": "Curated OpenCode Zen + GitHub Copilot model prices (USD per 1M tokens) and SWE-bench Verified % coding scores. Prices marked priceSource=docs come from the OpenCode Zen docs price table or the GitHub Copilot models-and-pricing YAML; estimated ones are placeholders. Run `modelmaxx fetch` to refresh availability and scrape live prices.",
+  "models": [
+    {
+      "id": "opencode/hy3-free",
+      "name": "Hy3 Free",
+      "provider": "opencode-zen",
+      "free": true,
+      "priceIn": 0,
+      "priceOut": 0,
+      "priceSource": "docs",
+      "metrics": {
+        "coding": 60,
+        "visual": 60,
+        "reasoning": 78,
+        "speed": 90,
+        "context": 19,
+        "tooluse": 78,
+        "instruction": 80,
+        "multimodal": 30,
+        "source": "models.dev(context)+bench"
+      }
+    },
+    {
+      "id": "opencode/mimo-v2.5-free",
+      "name": "MiMo-V2.5 Free",
+      "provider": "opencode-zen",
+      "free": true,
+      "priceIn": 0,
+      "priceOut": 0,
+      "priceSource": "docs",
+      "metrics": {
+        "coding": 62,
+        "visual": 60,
+        "reasoning": 78,
+        "speed": 90,
+        "context": 20,
+        "tooluse": 78,
+        "instruction": 80,
+        "multimodal": 30,
+        "source": "models.dev(context)+bench"
+      }
+    },
+    {
+      "id": "opencode/nemotron-3-ultra-free",
+      "name": "Nemotron 3 Ultra Free",
+      "provider": "opencode-zen",
+      "free": true,
+      "priceIn": 0,
+      "priceOut": 0,
+      "priceSource": "docs",
+      "metrics": {
+        "coding": 70.7,
+        "visual": 60,
+        "reasoning": 78,
+        "speed": 90,
+        "context": 100,
+        "tooluse": 78,
+        "instruction": 80,
+        "multimodal": 85,
+        "source": "models.dev(context)+bench"
+      }
+    },
+    {
+      "id": "opencode/north-mini-code-free",
+      "name": "North Mini Code Free",
+      "provider": "opencode-zen",
+      "free": true,
+      "priceIn": 0,
+      "priceOut": 0,
+      "priceSource": "docs",
+      "metrics": {
+        "coding": 55,
+        "visual": 60,
+        "reasoning": 70,
+        "speed": 90,
+        "context": 25.6,
+        "tooluse": 78,
+        "instruction": 80,
+        "multimodal": 30,
+        "source": "models.dev(context)+bench"
+      }
+    },
+    {
+      "id": "opencode/deepseek-v4-flash-free",
+      "name": "DeepSeek V4 Flash Free",
+      "provider": "opencode-zen",
+      "free": true,
+      "priceIn": 0,
+      "priceOut": 0,
+      "priceSource": "docs",
+      "metrics": {
+        "coding": 72,
+        "visual": 72,
+        "reasoning": 76,
+        "speed": 90,
+        "context": 20,
+        "tooluse": 78,
+        "instruction": 80,
+        "multimodal": 30,
+        "source": "models.dev(context)+bench"
+      }
+    },
+    {
+      "id": "opencode/big-pickle",
+      "name": "Big Pickle",
+      "provider": "opencode-zen",
+      "free": true,
+      "priceIn": 0,
+      "priceOut": 0,
+      "priceSource": "docs",
+      "metrics": {
+        "coding": 50,
+        "visual": 60,
+        "reasoning": 78,
+        "speed": 80,
+        "context": 20,
+        "tooluse": 78,
+        "instruction": 80,
+        "multimodal": 30,
+        "source": "models.dev(context)+bench"
+      }
+    },
+    {
+      "id": "opencode/nemotron-3-super-free",
+      "name": "Nemotron 3 Super Free",
+      "provider": "opencode-zen",
+      "free": true,
+      "priceIn": 0,
+      "priceOut": 0,
+      "priceSource": "docs",
+      "metrics": {
+        "coding": 66,
+        "visual": 60,
+        "reasoning": 78,
+        "speed": 90,
+        "context": 20.48,
+        "tooluse": 78,
+        "instruction": 80,
+        "multimodal": 85,
+        "source": "models.dev(context)+bench"
+      }
+    },
+    {
+      "id": "opencode/kimi-k2.5-free",
+      "name": "Kimi K2.5 Free",
+      "provider": "opencode-zen",
+      "free": true,
+      "priceIn": 0,
+      "priceOut": 0,
+      "priceSource": "docs",
+      "metrics": {
+        "coding": 76.8,
+        "visual": 60,
+        "reasoning": 82,
+        "speed": 90,
+        "context": 26,
+        "tooluse": 78,
+        "instruction": 80,
+        "multimodal": 30,
+        "source": "models.dev(context)+bench"
+      }
+    },
+    {
+      "id": "opencode/minimax-m2.5-free",
+      "name": "MiniMax M2.5 Free",
+      "provider": "opencode-zen",
+      "free": true,
+      "priceIn": 0,
+      "priceOut": 0,
+      "priceSource": "docs",
+      "metrics": {
+        "coding": 80.2,
+        "visual": 60,
+        "reasoning": 70,
+        "speed": 90,
+        "context": 20,
+        "tooluse": 78,
+        "instruction": 80,
+        "multimodal": 30,
+        "source": "models.dev(context)+bench"
+      }
+    },
+    {
+      "id": "opencode/glm-5-free",
+      "name": "GLM 5 Free",
+      "provider": "opencode-zen",
+      "free": true,
+      "priceIn": 0,
+      "priceOut": 0,
+      "priceSource": "docs",
+      "metrics": {
+        "coding": 77.8,
+        "visual": 60,
+        "reasoning": 78,
+        "speed": 90,
+        "context": 20.48,
+        "tooluse": 78,
+        "instruction": 80,
+        "multimodal": 85,
+        "source": "models.dev(context)+bench"
+      }
+    },
+    {
+      "id": "opencode/muse-spark-1.2-contributor-free",
+      "name": "Muse Spark 1.2 Contributor Free",
+      "provider": "opencode-zen",
+      "free": true,
+      "priceIn": 0,
+      "priceOut": 0,
+      "priceSource": "docs",
+      "metrics": {
+        "coding": 60,
+        "visual": 60,
+        "reasoning": 78,
+        "speed": 90,
+        "context": 100,
+        "tooluse": 78,
+        "instruction": 80,
+        "multimodal": 30,
+        "source": "models.dev(context)+bench"
+      }
+    },
+    {
+      "id": "opencode/ling-3.0-flash-free",
+      "name": "Ling 3.0 Flash Free",
+      "provider": "opencode-zen",
+      "free": true,
+      "priceIn": 0,
+      "priceOut": 0,
+      "priceSource": "docs",
+      "metrics": {
+        "coding": 55,
+        "visual": 72,
+        "reasoning": 76,
+        "speed": 90,
+        "context": 26,
+        "tooluse": 78,
+        "instruction": 80,
+        "multimodal": 30,
+        "source": "models.dev(context)+bench"
+      }
+    },
+    {
+      "id": "opencode/longcat-2.0-free",
+      "name": "Longcat 2.0 Free",
+      "provider": "opencode-zen",
+      "free": true,
+      "priceIn": 0,
+      "priceOut": 0,
+      "priceSource": "docs",
+      "metrics": {
+        "coding": 55,
+        "visual": 60,
+        "reasoning": 78,
+        "speed": 90,
+        "context": 100,
+        "tooluse": 78,
+        "instruction": 80,
+        "multimodal": 30,
+        "source": "models.dev(context)+bench"
+      }
+    },
+    {
+      "id": "opencode/laguna-s-2.1-free",
+      "name": "Laguna S 2.1 Free",
+      "provider": "opencode-zen",
+      "free": true,
+      "priceIn": 0,
+      "priceOut": 0,
+      "priceSource": "docs",
+      "metrics": {
+        "coding": 55,
+        "visual": 60,
+        "reasoning": 78,
+        "speed": 90,
+        "context": 26,
+        "tooluse": 78,
+        "instruction": 80,
+        "multimodal": 30,
+        "source": "models.dev(context)+bench"
+      }
+    },
+    {
+      "id": "opencode/gpt-5-2",
+      "name": "GPT 5.2",
+      "provider": "openai-via-zen",
+      "free": false,
+      "priceIn": 1.75,
+      "priceOut": 14,
+      "priceSource": "models.dev",
+      "metrics": {
+        "coding": 80,
+        "visual": 60,
+        "reasoning": 80,
+        "speed": 80,
+        "context": 40,
+        "tooluse": 78,
+        "instruction": 80,
+        "multimodal": 30,
+        "source": "models.dev(context)+bench"
+      }
+    },
+    {
+      "id": "opencode/gpt-5-1",
+      "name": "GPT 5.1",
+      "provider": "openai-via-zen",
+      "free": false,
+      "priceIn": 1.07,
+      "priceOut": 8.5,
+      "priceSource": "models.dev",
+      "metrics": {
+        "coding": 78,
+        "visual": 60,
+        "reasoning": 78,
+        "speed": 80,
+        "context": 40,
+        "tooluse": 78,
+        "instruction": 80,
+        "multimodal": 30,
+        "source": "models.dev(context)+bench"
+      }
+    },
+    {
+      "id": "opencode/gpt-5-1-codex-mini",
+      "name": "GPT 5.1 Codex Mini",
+      "provider": "openai-via-zen",
+      "free": false,
+      "priceIn": 0.25,
+      "priceOut": 2,
+      "priceSource": "models.dev",
+      "metrics": {
+        "coding": 70,
+        "visual": 60,
+        "reasoning": 70,
+        "speed": 90,
+        "context": 40,
+        "tooluse": 78,
+        "instruction": 80,
+        "multimodal": 30,
+        "source": "models.dev(context)+bench"
+      }
+    },
+    {
+      "id": "opencode/gpt-5-6-sol",
+      "name": "GPT 5.6 Sol",
+      "provider": "openai-via-zen",
+      "free": false,
+      "priceIn": 2,
+      "priceOut": 10,
+      "priceSource": "models.dev",
+      "metrics": {
+        "coding": 82.2,
+        "visual": 80,
+        "reasoning": 82,
+        "speed": 75,
+        "context": 100,
+        "tooluse": 78,
+        "instruction": 80,
+        "multimodal": 85,
+        "source": "models.dev(context)+bench"
+      }
+    },
+    {
+      "id": "opencode/gpt-5-6-terra",
+      "name": "GPT 5.6 Terra",
+      "provider": "openai-via-zen",
+      "free": false,
+      "priceIn": 2.5,
+      "priceOut": 15,
+      "priceSource": "models.dev",
+      "metrics": {
+        "coding": 81,
+        "visual": 85,
+        "reasoning": 88,
+        "speed": 56,
+        "context": 100,
+        "tooluse": 92,
+        "instruction": 90,
+        "multimodal": 85,
+        "source": "models.dev(context)+bench"
+      }
+    },
+    {
+      "id": "opencode/gpt-5-6-luna",
+      "name": "GPT 5.6 Luna",
+      "provider": "openai-via-zen",
+      "free": false,
+      "priceIn": 0.2,
+      "priceOut": 1.2,
+      "priceSource": "models.dev",
+      "metrics": {
+        "coding": 75,
+        "visual": 72,
+        "reasoning": 80,
+        "speed": 90,
+        "context": 100,
+        "tooluse": 78,
+        "instruction": 80,
+        "multimodal": 85,
+        "source": "models.dev(context)+bench"
+      }
+    },
+    {
+      "id": "opencode/claude-opus-4-5",
+      "name": "Claude Opus 4.5",
+      "provider": "anthropic-via-zen",
+      "free": false,
+      "priceIn": 5,
+      "priceOut": 25,
+      "priceSource": "models.dev",
+      "metrics": {
+        "coding": 80.9,
+        "visual": 90,
+        "reasoning": 94,
+        "speed": 56,
+        "context": 20,
+        "tooluse": 92,
+        "instruction": 90,
+        "multimodal": 85,
+        "source": "models.dev(context)+bench"
+      }
+    },
+    {
+      "id": "opencode/claude-opus-4-6",
+      "name": "Claude Opus 4.6",
+      "provider": "anthropic-via-zen",
+      "free": false,
+      "priceIn": 5,
+      "priceOut": 25,
+      "priceSource": "models.dev",
+      "metrics": {
+        "coding": 80.8,
+        "visual": 90,
+        "reasoning": 94,
+        "speed": 56,
+        "context": 100,
+        "tooluse": 92,
+        "instruction": 90,
+        "multimodal": 85,
+        "source": "models.dev(context)+bench"
+      }
+    },
+    {
+      "id": "opencode/claude-opus-4-7",
+      "name": "Claude Opus 4.7",
+      "provider": "anthropic-via-zen",
+      "free": false,
+      "priceIn": 5,
+      "priceOut": 25,
+      "priceSource": "models.dev",
+      "metrics": {
+        "coding": 87.6,
+        "visual": 90,
+        "reasoning": 94,
+        "speed": 56,
+        "context": 100,
+        "tooluse": 92,
+        "instruction": 90,
+        "multimodal": 85,
+        "source": "models.dev(context)+bench"
+      }
+    },
+    {
+      "id": "opencode/claude-opus-4-8",
+      "name": "Claude Opus 4.8",
+      "provider": "anthropic-via-zen",
+      "free": false,
+      "priceIn": 5,
+      "priceOut": 25,
+      "priceSource": "models.dev",
+      "metrics": {
+        "coding": 88.6,
+        "visual": 90,
+        "reasoning": 94,
+        "speed": 56,
+        "context": 100,
+        "tooluse": 92,
+        "instruction": 90,
+        "multimodal": 85,
+        "source": "models.dev(context)+bench"
+      }
+    },
+    {
+      "id": "opencode/claude-sonnet-4-6",
+      "name": "Claude Sonnet 4.6",
+      "provider": "anthropic-via-zen",
+      "free": false,
+      "priceIn": 3,
+      "priceOut": 15,
+      "priceSource": "models.dev",
+      "metrics": {
+        "coding": 79.6,
+        "visual": 85,
+        "reasoning": 88,
+        "speed": 70,
+        "context": 100,
+        "tooluse": 92,
+        "instruction": 90,
+        "multimodal": 85,
+        "source": "models.dev(context)+bench"
+      }
+    },
+    {
+      "id": "opencode/claude-sonnet-4-5",
+      "name": "Claude Sonnet 4.5",
+      "provider": "anthropic-via-zen",
+      "free": false,
+      "priceIn": 3,
+      "priceOut": 15,
+      "priceSource": "models.dev",
+      "metrics": {
+        "coding": 79,
+        "visual": 85,
+        "reasoning": 88,
+        "speed": 70,
+        "context": 100,
+        "tooluse": 92,
+        "instruction": 90,
+        "multimodal": 85,
+        "source": "models.dev(context)+bench"
+      }
+    },
+    {
+      "id": "opencode/claude-haiku-4-5",
+      "name": "Claude Haiku 4.5",
+      "provider": "anthropic-via-zen",
+      "free": false,
+      "priceIn": 1,
+      "priceOut": 5,
+      "priceSource": "models.dev",
+      "metrics": {
+        "coding": 70,
+        "visual": 60,
+        "reasoning": 78,
+        "speed": 80,
+        "context": 20,
+        "tooluse": 78,
+        "instruction": 80,
+        "multimodal": 85,
+        "source": "models.dev(context)+bench"
+      }
+    },
+    {
+      "id": "opencode/gemini-3-pro",
+      "name": "Gemini 3 Pro",
+      "provider": "google-via-zen",
+      "free": false,
+      "priceIn": 2,
+      "priceOut": 12,
+      "priceSource": "models.dev",
+      "metrics": {
+        "coding": 80.6,
+        "visual": 82,
+        "reasoning": 88,
+        "speed": 90,
+        "context": 100,
+        "tooluse": 92,
+        "instruction": 90,
+        "multimodal": 85,
+        "source": "models.dev(context)+bench"
+      }
+    },
+    {
+      "id": "opencode/gemini-3-flash",
+      "name": "Gemini 3 Flash",
+      "provider": "google-via-zen",
+      "free": false,
+      "priceIn": 0.5,
+      "priceOut": 3,
+      "priceSource": "models.dev",
+      "metrics": {
+        "coding": 78,
+        "visual": 72,
+        "reasoning": 70,
+        "speed": 90,
+        "context": 100,
+        "tooluse": 78,
+        "instruction": 80,
+        "multimodal": 85,
+        "source": "models.dev(context)+bench"
+      }
+    },
+    {
+      "id": "opencode/kimi-k2-5",
+      "name": "Kimi K2.5",
+      "provider": "moonshot-via-zen",
+      "free": false,
+      "priceIn": 0.6,
+      "priceOut": 3,
+      "priceSource": "models.dev",
+      "metrics": {
+        "coding": 76.8,
+        "visual": 60,
+        "reasoning": 82,
+        "speed": 80,
+        "context": 26.2144,
+        "tooluse": 78,
+        "instruction": 80,
+        "multimodal": 85,
+        "source": "models.dev(context)+bench"
+      }
+    },
+    {
+      "id": "opencode/kimi-k2-6",
+      "name": "Kimi K2.6",
+      "provider": "moonshot-via-zen",
+      "free": false,
+      "priceIn": 0.95,
+      "priceOut": 4,
+      "priceSource": "models.dev",
+      "metrics": {
+        "coding": 80.2,
+        "visual": 60,
+        "reasoning": 82,
+        "speed": 80,
+        "context": 26.2144,
+        "tooluse": 78,
+        "instruction": 80,
+        "multimodal": 30,
+        "source": "models.dev(context)+bench"
+      }
+    },
+    {
+      "id": "opencode/glm-5",
+      "name": "GLM 5",
+      "provider": "zhipu-via-zen",
+      "free": false,
+      "priceIn": 1,
+      "priceOut": 3.2,
+      "priceSource": "models.dev",
+      "metrics": {
+        "coding": 77.8,
+        "visual": 60,
+        "reasoning": 78,
+        "speed": 80,
+        "context": 20.48,
+        "tooluse": 78,
+        "instruction": 80,
+        "multimodal": 85,
+        "source": "models.dev(context)+bench"
+      }
+    },
+    {
+      "id": "opencode/minimax-m2-5",
+      "name": "MiniMax M2.5",
+      "provider": "minimax-via-zen",
+      "free": false,
+      "priceIn": 0.3,
+      "priceOut": 1.2,
+      "priceSource": "models.dev",
+      "metrics": {
+        "coding": 80.2,
+        "visual": 60,
+        "reasoning": 70,
+        "speed": 90,
+        "context": 20.48,
+        "tooluse": 78,
+        "instruction": 80,
+        "multimodal": 85,
+        "source": "models.dev(context)+bench"
+      }
+    },
+    {
+      "id": "opencode/minimax-m2-7",
+      "name": "MiniMax M2.7",
+      "provider": "minimax-via-zen",
+      "free": false,
+      "priceIn": 0.3,
+      "priceOut": 1.2,
+      "priceSource": "models.dev",
+      "metrics": {
+        "coding": 80,
+        "visual": 60,
+        "reasoning": 70,
+        "speed": 90,
+        "context": 20.48,
+        "tooluse": 78,
+        "instruction": 80,
+        "multimodal": 30,
+        "source": "models.dev(context)+bench"
+      }
+    },
+    {
+      "id": "opencode/qwen3-coder",
+      "name": "Qwen3 Coder 480B",
+      "provider": "alibaba-via-zen",
+      "free": false,
+      "priceIn": 0.45,
+      "priceOut": 1.8,
+      "priceSource": "models.dev",
+      "metrics": {
+        "coding": 75,
+        "visual": 60,
+        "reasoning": 78,
+        "speed": 80,
+        "context": 26.2144,
+        "tooluse": 78,
+        "instruction": 80,
+        "multimodal": 30,
+        "source": "models.dev(context)+bench"
+      }
+    },
+    {
+      "id": "opencode/qwen3-6-plus",
+      "name": "Qwen3.6 Plus",
+      "provider": "alibaba-via-zen",
+      "free": false,
+      "priceIn": 0.5,
+      "priceOut": 3,
+      "priceSource": "models.dev",
+      "metrics": {
+        "coding": 78.8,
+        "visual": 60,
+        "reasoning": 78,
+        "speed": 80,
+        "context": 26.2144,
+        "tooluse": 78,
+        "instruction": 80,
+        "multimodal": 30,
+        "source": "models.dev(context)+bench"
+      }
+    },
+    {
+      "id": "opencode/qwen3-5-plus",
+      "name": "Qwen3.5 Plus",
+      "provider": "alibaba-via-zen",
+      "free": false,
+      "priceIn": 0.2,
+      "priceOut": 1.2,
+      "priceSource": "models.dev",
+      "metrics": {
+        "coding": 78,
+        "visual": 60,
+        "reasoning": 78,
+        "speed": 80,
+        "context": 26.2144,
+        "tooluse": 78,
+        "instruction": 80,
+        "multimodal": 85,
+        "source": "models.dev(context)+bench"
+      }
+    },
+    {
+      "id": "github-copilot/gpt-5-6-terra",
+      "name": "GPT 5.6 Terra (Copilot)",
+      "provider": "github-copilot",
+      "free": false,
+      "priceIn": 2,
+      "priceOut": 12,
+      "priceSource": "models.dev",
+      "metrics": {
+        "coding": 81,
+        "visual": 85,
+        "reasoning": 88,
+        "speed": 56,
+        "context": 100,
+        "tooluse": 92,
+        "instruction": 90,
+        "multimodal": 85,
+        "source": "models.dev(context)+bench"
+      }
+    },
+    {
+      "id": "github-copilot/gpt-5-6-sol",
+      "name": "GPT 5.6 Sol (Copilot)",
+      "provider": "github-copilot",
+      "free": false,
+      "priceIn": 2,
+      "priceOut": 10,
+      "priceSource": "models.dev",
+      "metrics": {
+        "coding": 82.2,
+        "visual": 80,
+        "reasoning": 82,
+        "speed": 75,
+        "context": 100,
+        "tooluse": 78,
+        "instruction": 80,
+        "multimodal": 85,
+        "source": "models.dev(context)+bench"
+      }
+    },
+    {
+      "id": "github-copilot/gpt-5-6-luna",
+      "name": "GPT 5.6 Luna (Copilot)",
+      "provider": "github-copilot",
+      "free": false,
+      "priceIn": 0.2,
+      "priceOut": 1.2,
+      "priceSource": "models.dev",
+      "metrics": {
+        "coding": 75,
+        "visual": 72,
+        "reasoning": 80,
+        "speed": 90,
+        "context": 100,
+        "tooluse": 78,
+        "instruction": 80,
+        "multimodal": 85,
+        "source": "models.dev(context)+bench"
+      }
+    },
+    {
+      "id": "github-copilot/claude-sonnet-4-6",
+      "name": "Claude Sonnet 4.6 (Copilot)",
+      "provider": "github-copilot",
+      "free": false,
+      "priceIn": 3,
+      "priceOut": 15,
+      "priceSource": "models.dev",
+      "metrics": {
+        "coding": 79.6,
+        "visual": 85,
+        "reasoning": 88,
+        "speed": 70,
+        "context": 20,
+        "tooluse": 92,
+        "instruction": 90,
+        "multimodal": 85,
+        "source": "models.dev(context)+bench"
+      }
+    },
+    {
+      "id": "github-copilot/claude-opus-4-7",
+      "name": "Claude Opus 4.7 (Copilot)",
+      "provider": "github-copilot",
+      "free": false,
+      "priceIn": 5,
+      "priceOut": 25,
+      "priceSource": "models.dev",
+      "metrics": {
+        "coding": 87.6,
+        "visual": 90,
+        "reasoning": 94,
+        "speed": 56,
+        "context": 20,
+        "tooluse": 92,
+        "instruction": 90,
+        "multimodal": 85,
+        "source": "models.dev(context)+bench"
+      }
+    },
+    {
+      "id": "github-copilot/claude-opus-4-8",
+      "name": "Claude Opus 4.8 (Copilot)",
+      "provider": "github-copilot",
+      "free": false,
+      "priceIn": 5,
+      "priceOut": 25,
+      "priceSource": "models.dev",
+      "metrics": {
+        "coding": 88.6,
+        "visual": 90,
+        "reasoning": 94,
+        "speed": 56,
+        "context": 20,
+        "tooluse": 92,
+        "instruction": 90,
+        "multimodal": 85,
+        "source": "models.dev(context)+bench"
+      }
+    },
+    {
+      "id": "github-copilot/gemini-3.1-pro-preview",
+      "name": "Gemini 3.1 Pro (Copilot)",
+      "provider": "github-copilot",
+      "free": false,
+      "priceIn": 2,
+      "priceOut": 12,
+      "priceSource": "models.dev",
+      "metrics": {
+        "coding": 80.6,
+        "visual": 82,
+        "reasoning": 88,
+        "speed": 90,
+        "context": 100,
+        "tooluse": 92,
+        "instruction": 90,
+        "multimodal": 85,
+        "source": "models.dev(context)+bench"
+      }
+    },
+    {
+      "id": "github-copilot/gpt-5-2",
+      "name": "GPT 5.2 (Copilot)",
+      "provider": "github-copilot",
+      "free": false,
+      "priceIn": 1.75,
+      "priceOut": 14,
+      "priceSource": "models.dev",
+      "metrics": {
+        "coding": 80,
+        "visual": 60,
+        "reasoning": 80,
+        "speed": 80,
+        "context": 40,
+        "tooluse": 78,
+        "instruction": 80,
+        "multimodal": 30,
+        "source": "models.dev(context)+bench"
+      }
+    },
+    {
+      "id": "github-copilot/gpt-5-5",
+      "name": "GPT 5.5 (Copilot)",
+      "provider": "github-copilot",
+      "free": false,
+      "priceIn": 5,
+      "priceOut": 30,
+      "priceSource": "models.dev",
+      "metrics": {
+        "coding": 82,
+        "visual": 60,
+        "reasoning": 78,
+        "speed": 80,
+        "context": 100,
+        "tooluse": 78,
+        "instruction": 80,
+        "multimodal": 30,
+        "source": "models.dev(context)+bench"
+      }
+    }
+  ]
+}
