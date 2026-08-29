@@ -477,6 +477,29 @@ var metricShort = map[string]string{
 	"multimodal":  "MULT",
 }
 
+// metricVal returns the formatted capability value (0–100 integer) for a model/metric.
+func metricVal(m Model, name string) string {
+	switch name {
+	case "coding":
+		return fmt.Sprintf("%d", int(m.Metrics.Coding))
+	case "visual":
+		return fmt.Sprintf("%d", int(m.Metrics.Visual))
+	case "reasoning":
+		return fmt.Sprintf("%d", int(m.Metrics.Reasoning))
+	case "speed":
+		return fmt.Sprintf("%d", int(m.Metrics.Speed))
+	case "context":
+		return fmt.Sprintf("%d", int(m.Metrics.Context))
+	case "tooluse":
+		return fmt.Sprintf("%d", int(m.Metrics.ToolUse))
+	case "instruction":
+		return fmt.Sprintf("%d", int(m.Metrics.Instruction))
+	case "multimodal":
+		return fmt.Sprintf("%d", int(m.Metrics.Multimodal))
+	}
+	return ""
+}
+
 // metricHead renders a metric column header for a role. Metrics the role weights are
 // shown bold; unused metrics (weight 0) are dimmed; the dominant (highest-weight)
 // metric gets a ★. With role=="" every metric is treated as active (used by the
@@ -571,11 +594,34 @@ func cmdList(provider string, freeOnly bool, role string) {
 	fmt.Println(paint(cDim, strings.Repeat("─", 60)))
 	fmt.Println()
 
+	// activeMetrics: which capability columns to render. With no role, show all
+	// eight; with a role, show only the metrics that role actually weights (>0) to
+	// narrow the table.
+	allMetrics := []string{"coding", "visual", "reasoning", "speed", "context", "tooluse", "instruction", "multimodal"}
+	activeMetrics := allMetrics
+	if role != "" {
+		activeMetrics = nil
+		for _, name := range allMetrics {
+			if roleWeights[role][name] > 0 {
+				activeMetrics = append(activeMetrics, name)
+			}
+		}
+	}
+
 	type lrow struct {
-		val, coding, visual, reasoning, speed, ctx, tooluse, instruction, multimodal, cost, eff, bench, id, why string
+		val, cost, eff, bench, id, why string
+		metric                        map[string]string
 	}
 	var lrows []lrow
 	wVal, wId, wCost, wEff, wBench := 5, 4, 5, 6, 5
+	wMetric := map[string]int{}
+	for _, name := range activeMetrics {
+		w := len(metricShort[name])
+		if role != "" && isDominant(role, name) {
+			w++
+		}
+		wMetric[name] = w
+	}
 	for _, r := range rows {
 		m := r.m
 		idStr := m.Id
@@ -585,14 +631,12 @@ func cmdList(provider string, freeOnly bool, role string) {
 			idStr = paint(cGreen, m.Id)
 		}
 		valStr := paint(valueColor(r.v), fmt.Sprintf("%.2f", r.v))
-		codingStr := fmt.Sprintf("%d", int(m.Metrics.Coding))
-		visualStr := fmt.Sprintf("%d", int(m.Metrics.Visual))
-		reasoningStr := fmt.Sprintf("%d", int(m.Metrics.Reasoning))
-		speedStr := fmt.Sprintf("%d", int(m.Metrics.Speed))
-		ctxStr := fmt.Sprintf("%d", int(m.Metrics.Context))
-		tooluseStr := fmt.Sprintf("%d", int(m.Metrics.ToolUse))
-		instructionStr := fmt.Sprintf("%d", int(m.Metrics.Instruction))
-		multimodalStr := fmt.Sprintf("%d", int(m.Metrics.Multimodal))
+		ms := map[string]string{}
+		for _, name := range activeMetrics {
+			s := metricVal(m, name)
+			ms[name] = s
+			wMetric[name] = max(wMetric[name], vlen(s))
+		}
 		costStr := fmt.Sprintf("%.2f", cost(role, m))
 		effStr := fmt.Sprintf("%.2f", effCost(role, m))
 		benchStr := fmt.Sprintf("%.1f", bench(role, m))
@@ -600,22 +644,18 @@ func cmdList(provider string, freeOnly bool, role string) {
 		if role != "" {
 			whyStr = formatDrivers(role, m)
 		}
-		lrows = append(lrows, lrow{valStr, codingStr, visualStr, reasoningStr, speedStr, ctxStr, tooluseStr, instructionStr, multimodalStr, costStr, effStr, benchStr, idStr, whyStr})
+		lrows = append(lrows, lrow{valStr, costStr, effStr, benchStr, idStr, whyStr, ms})
 		wVal = max(wVal, vlen(valStr))
 		wId = max(wId, vlen(idStr))
 		wCost = max(wCost, vlen(costStr))
 		wBench = max(wBench, vlen(benchStr))
 		wEff = max(wEff, vlen(effStr))
 	}
-	header := lpad(paint(cBold, "ID"), wId) + "  " +
-		pad(metricHead(role, "coding"), 4) + " " +
-		pad(metricHead(role, "visual"), 4) + " " +
-		pad(metricHead(role, "reasoning"), 5) + " " +
-		pad(metricHead(role, "speed"), 4) + " " +
-		pad(metricHead(role, "context"), 4) + " " +
-		pad(metricHead(role, "tooluse"), 4) + " " +
-		pad(metricHead(role, "instruction"), 4) + " " +
-		pad(metricHead(role, "multimodal"), 4) + "  " +
+	var metricHeads []string
+	for _, name := range activeMetrics {
+		metricHeads = append(metricHeads, pad(metricHead(role, name), wMetric[name]))
+	}
+	header := lpad(paint(cBold, "ID"), wId) + "  " + strings.Join(metricHeads, " ") + "  " +
 		pad(paint(cBold, "COST"), wCost) + "  " +
 		pad(paint(cBold, "V_COST"), wEff) + "  " +
 		pad(paint(cBold, "BENCH"), wBench) + "  " +
@@ -626,15 +666,11 @@ func cmdList(provider string, freeOnly bool, role string) {
 	fmt.Println(header)
 	fmt.Println(paint(cDim, strings.Repeat("─", vlen(header))))
 	for _, r := range lrows {
-		line := lpad(r.id, wId) + "  " +
-		pad(r.coding, 4) + " " +
-		pad(r.visual, 4) + " " +
-		pad(r.reasoning, 5) + " " +
-		pad(r.speed, 4) + " " +
-		pad(r.ctx, 4) + " " +
-		pad(r.tooluse, 4) + " " +
-		pad(r.instruction, 4) + " " +
-		pad(r.multimodal, 4) + "  " +
+		var metricVals []string
+		for _, name := range activeMetrics {
+			metricVals = append(metricVals, pad(r.metric[name], wMetric[name]))
+		}
+		line := lpad(r.id, wId) + "  " + strings.Join(metricVals, " ") + "  " +
 			pad(r.cost, wCost) + "  " +
 			pad(r.eff, wEff) + "  " +
 			pad(r.bench, wBench) + "  " +
