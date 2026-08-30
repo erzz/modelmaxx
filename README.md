@@ -1,8 +1,9 @@
 # modelmaxx
 
-Its a new week, so there is new models, new pricing, new tweaks, new benchmarks... it's an endless
-task to continuously optimise your harness, agents and model selections to keep the quality up
-whilst keeping the price down.
+Its a new week! So there are new models, new pricing, new tweaks, new benchmarks, new research...
+
+It's an endless task to continuously optimise your harness, agents and model selections to **keep
+the quality up whilst keeping the price down**.
 
 Is the latest and greatest good? Does it excel at the things you need it to? Does a model that works
 well for one usecase suffice for others? Or am I throwing money after the marketing hype? Perhaps a
@@ -33,15 +34,15 @@ translatable to your own set-up too.
 
 OMO-slim have multiple pre-configured agents:
 
-| Role         | What it does                                                                        | What we weight                                                                          |
-| ------------ | ----------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
-| orchestrator | Plans, dispatches and judges across agents — needs sound judgment and obedience     | reasoning (0.30) + instruction (0.30) lead; context (0.15); light coding (0.05)         |
-| oracle       | Deep-thinking reviewer of code, architecture & approach — highest reasoning demands | reasoning (0.45) dominant; context (0.20), instruction (0.15), coding (0.15)            |
-| council      | Synthesises perspectives for high-stakes decisions                                  | reasoning (0.40) + instruction (0.25) for synthesis; context (0.20), coding (0.15)      |
-| librarian    | Fast, cheap research / lookup                                                       | speed (0.25) + cheapness (cost exp 0.70); context (0.20), tooluse (0.20), coding (0.15) |
-| explorer     | Fast, cheap codebase recon                                                          | speed (0.40) dominant; coding (0.20), tooluse (0.20); cheap (exp 0.70)                  |
-| designer     | UI/UX design & visual polish                                                        | visual (0.45) dominant; coding (0.20), reasoning (0.10), multimodal (0.10)              |
-| fixer        | Reliable, efficient coding execution                                                | coding (0.45) dominant; instruction (0.15), reasoning (0.15), context (0.10)            |
+| Role         | What it does                                                                        | What we weight                                         |
+| ------------ | ----------------------------------------------------------------------------------- | ------------------------------------------------------ |
+| orchestrator | Plans, dispatches and judges across agents — needs sound judgment and obedience     | reasoning + instruction lead; context; light coding    |
+| oracle       | Deep-thinking reviewer of code, architecture & approach — highest reasoning demands | reasoning dominant; context, instruction, coding       |
+| council      | Synthesises perspectives for high-stakes decisions                                  | reasoning + instruction for synthesis; context, coding |
+| librarian    | Fast, cheap research / lookup                                                       | speed + cheapness; context, tooluse, coding            |
+| explorer     | Fast, cheap codebase recon                                                          | speed dominant; coding, tooluse; cheap                 |
+| designer     | UI/UX design & visual polish                                                        | visual dominant; coding, reasoning , multimodal        |
+| fixer        | Reliable, efficient coding execution                                                | coding dominant; instruction, reasoning, context       |
 
 # How modelmaxx chooses models per role
 
@@ -63,13 +64,15 @@ opencode/claude-opus-4-8      88   94   100   92   90   17.00   30.60   93.7  66
 github-copilot/gpt-5-6-sol    82   82   100   78   80    6.80   12.24   85.1  66.27
 ```
 
+Our benchmarks and value calculations actually put luna in the lead! Why?
+
 According to this output, opus 4-8 wins right? It has a better score on almost every metric and our
 weighting system (BENCH) gives it the highest score for the attributes it needs. It even beats GPT
-Sol on the metrics that matter.i
+Sol on the metrics that matter.
 
 But once you account for price? You actually get the best value by using luna! Even though its about
 10% lower on our benchmark, when you consider bang-for-buck, an 9x markup for sol or a ~18x markup
-for opus just doesnt make sense. Sol gives an excellent performance for a fraction of the price.
+for opus just doesnt make sense. Luna gives an excellent performance for a fraction of the price.
 
 And given a choice between luna and sol? There just 2 points difference in the benchmark yet a 900%
 price premium for sol.
@@ -87,36 +90,46 @@ After calculating weighting of capabilties, we also consider how pricing will wo
 
 So for each role we figure out an estimation of the ratio of input/output tokens based on its role.
 
-| Role | Input / Output token split | Cost exponent | Why |
-|------|---------------------------|--------------|-----|
-| orchestrator | 50% / 50% | 0.15 | balanced planning and responses |
-| oracle | 40% / 60% | 0.10 | long reasoning outputs dominate the cost |
-| council | 60% / 40% | 0.10 | reads many perspectives (input-heavy), shorter synthesis |
-| librarian | 70% / 30% | 0.70 | ingests docs/queries, returns short answers |
-| explorer | 70% / 30% | 0.70 | ingests codebases, returns short findings |
-| designer | 20% / 80% | 0.05 | small prompts, large generated UI/code |
-| fixer | 15% / 85% | 0.30 | small task briefs, large code output |
-
-Higher exponent → cost weighs more in the value score, so free/cheap models win (see Value formula below). The exponent is scaled per role by `--costbias` (default 1.0): >1 leans free, <1 leans paid, 0 = pure capability.
+| Role         | Input / Output token split | Cost exponent | Why                                                      |
+| ------------ | -------------------------- | ------------- | -------------------------------------------------------- |
+| orchestrator | 50% / 50%                  | 0.15          | balanced planning and responses                          |
+| oracle       | 40% / 60%                  | 0.10          | long reasoning outputs dominate the cost                 |
+| council      | 60% / 40%                  | 0.10          | reads many perspectives (input-heavy), shorter synthesis |
+| librarian    | 70% / 30%                  | 0.70          | ingests docs/queries, returns short answers              |
+| explorer     | 70% / 30%                  | 0.70          | ingests codebases, returns short findings                |
+| designer     | 20% / 80%                  | 0.05          | small prompts, large generated UI/code                   |
+| fixer        | 15% / 85%                  | 0.30          | small task briefs, large code output                     |
 
 Of course - if the tool was really dumb, free models would always win. However they tend to be
 "inconsistent" in availability/performance. So we additionally balance this with some exponents that
 try to balance when its worth paying for a premium model because of it's excellence versus lifting
 out cheaper options where the real world experience is likely to perform extremely similarly.
 
-`modelmaxx` is a small Go CLI that recommends and configures the best opencode model preset for each
-OMO-Slim agent role, based on a role-specific, multi-metric "coding bang for buck" score. It weights
-capability metrics per role, applies a free-model penalty, prices each model by its real $/1M token
-cost (and the cost impact of the role's recommended reasoning variant), and ranks by **value**
-(capability per dollar).
+Higher exponent → cost weighs more in the value score, so free/cheap models win. Some people will
+want to apply more weight to quality than price or vice-versa. So you can tune your own preferences
+with the `--costbias` (default 1.0) flag: >1 leans free, <1 leans paid, 0 = pure capability.
 
-## Why
+A great example of this is the designer role where we really value the quality of the multimodal and
+visual capabilities of some models. If we run the tool to recommend a model for this agent we get:
 
-OMO-Slim splits work across 7 specialist agents (orchestrator, oracle, council, librarian, explorer,
-designer, fixer). Each role needs a different capability profile — an oracle needs raw reasoning; an
-explorer needs speed and cheapness; a designer needs visual judgment. A single "best model" is
-wrong. `modelmaxx` scores every candidate model against each role's profile and picks the best
-value.
+```
+────────────────────────────────────────────────────────────
+
+ID                                     COD VIS★ REAS CTX TOOL INST MULT   COST  V_COST  BENCH  VALUE
+─────────────────────────────────────────────────────────────────────────────────────────────────────────
+github-copilot/gpt-5-6-luna             75   72   80 100   78   80   85   1.00    1.80   76.8  74.58
+github-copilot/gpt-5-6-terra            81   85   88 100   92   90   85  10.00   18.00   85.8  74.30
+github-copilot/gemini-3.1-pro-preview   80   82   88 100   92   90   85  10.00   18.00   84.4  73.06
+github-copilot/claude-opus-4-8          88   90   94  20   92   90   85  21.00   37.80   86.2  71.90
+github-copilot/claude-opus-4-7          87   90   94  20   92   90   85  21.00   37.80   86.0  71.73
+```
+
+So luna comes out on top even though its 10+ points lower on numerous metrics. **However it IS
+providing 90% of the capability for 5% of the cost!**
+
+But if you really value that last 10% so much you want to pay so much more for the anthropic models
+to come out on top, you can add `--costbias 0.5` which significantly reduces the importance of cost.
+But seriously, you likely won't see much difference unless you have some VERY demanding needs!
 
 ## How models are ranked & rated per role
 
@@ -138,7 +151,7 @@ bench(role, m) = Σ(roleWeight · metric) × freePenalty
 freePenalty = 0.7 if model is free else 1.0
 ```
 
-Free models are penalized 30% on merit (reliability/quality risk).
+Free models are penalized depending on the role (reliability/quality/privacy risk).
 
 ### Cost
 
@@ -172,22 +185,7 @@ value (a previous `minBench` floor was removed as a crude crutch that contradict
 ### Design principle
 
 The goal is **not** to pick paid models for their own sake. When two models are within ~1–2 bench
-points (negligible quality difference), the cheaper/free model should win. This is a future
-refinement (a "free wins on near-tie" rule) beyond the current exponent tuning.
-
-## Current recommendations
-
-| Role         | Model           | Notes             |
-| ------------ | --------------- | ----------------- |
-| orchestrator | gpt-5-6-luna    | generalist        |
-| oracle       | gpt-5-6-luna    | reasoning         |
-| council      | gpt-5-6-luna    | synthesis         |
-| librarian    | gpt-5-6-luna    | cheap + fast      |
-| explorer     | gpt-5-6-luna    | cheap + fast      |
-| designer     | claude-opus-4-8 | visual divergence |
-| fixer        | gpt-5-6-luna    | coding-dominant   |
-
-(6/7 pick the luna generalist; designer diverges on visual capability.)
+points (negligible quality difference), the cheaper/free model should win.
 
 ### Commands
 
@@ -199,7 +197,8 @@ refinement (a "free wins on near-tie" rule) beyond the current exponent tuning.
 ### Flags
 
 - `--provider` (opencode|copilot|all)
-- `--costbias <float>` — scales the cost exponent (default 1.0; >1 leans free/cheap, <1 leans paid/capable, 0 = pure capability). Replaces --free.
+- `--costbias <float>` — scales the cost exponent (default 1.0; >1 leans free/cheap, <1 leans
+  paid/capable, 0 = pure capability). Replaces --free.
 - `--preset` — target preset name
 - `--no-fetch` — skip the models.dev price refresh
 - `--config` — path to opencode config
