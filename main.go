@@ -1047,9 +1047,12 @@ func autoFetch(noFetch bool, cmd string) {
 		return
 	}
 	if u, c, err := runFetch("all"); err != nil {
-		fmt.Fprintln(os.Stderr, paint(cYellow, "warning: auto-fetch failed: "+err.Error()))
+		ds := loadDataset()
+		fmt.Fprintln(os.Stderr, paint(cRed, fmt.Sprintf("Unable to refresh data, executing based on dataset from %s", ds.Updated)))
+		fmt.Fprintln(os.Stderr, "")
 	} else if u > 0 || c > 0 {
-		fmt.Fprintln(os.Stderr, paint(cDim, fmt.Sprintf("refreshed %d prices, %d contexts from models.dev", u, c)))
+		fmt.Fprintln(os.Stderr, paint(cGreen, fmt.Sprintf("refreshed %d prices, %d contexts from models.dev", u, c)))
+		fmt.Fprintln(os.Stderr, "")
 	}
 }
 
