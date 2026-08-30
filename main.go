@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -244,6 +245,11 @@ var roleCostWeight = map[string]float64{
 	"fixer":        0.30,
 }
 
+// costbias scales every role's cost exponent. Default 1.0 leaves the tuned
+// exponents unchanged. >1 makes cost matter more (free/cheap models win); <1
+// makes cost matter less (capability/paid models win); 0 ranks by pure bench.
+var costbias = 1.0
+
 // roleVariant is the recommended reasoning variant (effort) per role, derived from
 // the OMO-Slim Model Guidance docs (NOT the user's current config values):
 //   - orchestrator: "Medium reasoning is enough"        => medium
@@ -272,9 +278,11 @@ func value(role string, m Model) float64 {
 	if c <= 0 {
 		c = 0.01
 	}
-	exp := roleCostWeight[role]
-	if exp == 0 {
+	var exp float64
+	if role == "" {
 		exp = 1.0
+	} else {
+		exp = roleCostWeight[role] * costbias
 	}
 	return bench(role, m) / math.Pow(c, exp)
 }
@@ -366,7 +374,7 @@ func formatCostSplit(role string) string {
 	if v, ok := roleCostSplit[role]; ok {
 		s = v
 	}
-	exp := roleCostWeight[role]
+	exp := roleCostWeight[role] * costbias
 	if exp == 0 {
 		exp = 1.0
 	}
@@ -560,8 +568,8 @@ func legendLine() string {
 	return strings.Join(lines, "\n")
 }
 
-func cmdList(provider string, freeOnly bool, role string) {
-	models := filterModels(provider, freeOnly)
+func cmdList(provider string, role string) {
+	models := filterModels(provider, false)
 	type row struct {
 		m Model
 		v float64
@@ -578,9 +586,6 @@ func cmdList(provider string, freeOnly bool, role string) {
 	scope := provider
 	if scope == "" || scope == "all" {
 		scope = "all providers"
-	}
-	if freeOnly {
-		scope = scope + " (free only)"
 	}
 	note := "value = unspecialised mean-metrics / cost"
 	if role != "" {
@@ -683,14 +688,11 @@ func cmdList(provider string, freeOnly bool, role string) {
 	fmt.Println()
 	fmt.Println(legendLine())
 }
-func cmdRecommend(provider string, freeOnly bool) {
-	rec := recommend(provider, freeOnly)
+func cmdRecommend(provider string) {
+	rec := recommend(provider, false)
 	scope := provider
 	if scope == "" || scope == "all" {
 		scope = "all providers"
-	}
-	if freeOnly {
-		scope = scope + " (free only)"
 	}
 	fmt.Println(paint(cBold, paint(cCyan, "# Recommended models")) + paint(cDim, " for "+scope))
 	fmt.Println(paint(cDim, strings.Repeat("─", 60)))
@@ -879,7 +881,7 @@ func applyRole(lines []string, role, modelId, variant string) []string {
 	return lines
 }
 
-func cmdApply(provider string, freeOnly bool, presetName string, configPath string, dryRun bool) {
+func cmdApply(provider string, presetName string, configPath string, dryRun bool) {
 	cfg := configPath
 	if cfg == "" {
 		home, _ := os.UserHomeDir()
@@ -902,7 +904,7 @@ func cmdApply(provider string, freeOnly bool, presetName string, configPath stri
 	var applied []string
 	for _, preset := range targets {
 		// The "free" block must only ever contain free models; force freeOnly there.
-		fo := freeOnly || preset == "free"
+		fo := preset == "free"
 		// Scope the model search to the natural provider for this block unless the
 		// user overrode it with --provider.
 		p := provider
@@ -1051,17 +1053,25 @@ func autoFetch(noFetch bool, cmd string) {
 	}
 }
 
+func parseCostbias(s string) float64 {
+	v, err := strconv.ParseFloat(s, 64)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "invalid --costbias: %s\n", s)
+		os.Exit(1)
+	}
+	return v
+}
+
 func main() {
 	args := os.Args[1:]
 	if len(args) == 0 {
 		autoFetch(false, "")
-		cmdRecommend("", false)
+		cmdRecommend("")
 		return
 	}
 	cmd := args[0]
 	provider := ""
 	providerSet := false
-	freeOnly := false
 	role := ""
 	presetName := ""
 	configPath := ""
@@ -1077,8 +1087,6 @@ func main() {
 		case strings.HasPrefix(a, "--provider="):
 			provider = a[len("--provider="):]
 			providerSet = true
-		case a == "--free":
-			freeOnly = true
 		case a == "--role" && i+1 < len(args):
 			role = args[i+1]
 			i++
@@ -1089,6 +1097,11 @@ func main() {
 			i++
 		case strings.HasPrefix(a, "--preset="):
 			presetName = a[len("--preset="):]
+		case a == "--costbias" && i+1 < len(args):
+			costbias = parseCostbias(args[i+1])
+			i++
+		case strings.HasPrefix(a, "--costbias="):
+			costbias = parseCostbias(a[len("--costbias="):])
 		case a == "--no-fetch":
 			noFetch = true
 		case a == "--config" && i+1 < len(args):
@@ -1113,14 +1126,18 @@ func main() {
 			os.Exit(1)
 		}
 	}
+	if costbias < 0 {
+		fmt.Fprintf(os.Stderr, "costbias must be >= 0 (got %v)\n", costbias)
+		os.Exit(1)
+	}
 	autoFetch(noFetch, cmd)
 	switch cmd {
 	case "list":
-		cmdList(provider, freeOnly, role)
+		cmdList(provider, role)
 	case "recommend":
-		cmdRecommend(provider, freeOnly)
+		cmdRecommend(provider)
 	case "apply":
-		cmdApply(provider, freeOnly, presetName, configPath, dryRun)
+		cmdApply(provider, presetName, configPath, dryRun)
 	case "fetch":
 		if !providerSet {
 			cmdFetch("all")

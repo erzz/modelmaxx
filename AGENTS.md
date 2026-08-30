@@ -13,7 +13,7 @@ Go 1.27, single-binary CLI (stdlib + models.dev fetch; no third-party deps).
 - Build: `go build -o modelmaxx .`  ← NOT `go build ./...` (that discards the main binary).
 - Run: `./modelmaxx recommend` (auto-fetches prices unless `--no-fetch`).
 - Other commands: `list`, `apply`, `fetch`.
-- Flags: `--provider`, `--free`, `--preset`, `--no-fetch`, `--config`, `--dry-run`, `--role`.
+- Flags: `--provider`, `--costbias <float>`, `--preset`, `--no-fetch`, `--config`, `--dry-run`, `--role`.
 - No test suite yet; verify by running `recommend` and eyeballing the table.
 
 ## Conventions

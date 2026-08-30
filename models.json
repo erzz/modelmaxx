@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated": "2026-08-29",
+  "updated": "2026-08-30",
   "note": "Curated OpenCode Zen + GitHub Copilot model prices (USD per 1M tokens) and SWE-bench Verified % coding scores. Prices marked priceSource=docs come from the OpenCode Zen docs price table or the GitHub Copilot models-and-pricing YAML; estimated ones are placeholders. Run `modelmaxx fetch` to refresh availability and scrape live prices.",
   "models": [
     {

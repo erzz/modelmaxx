@@ -97,7 +97,7 @@ So for each role we figure out an estimation of the ratio of input/output tokens
 | designer | 20% / 80% | 0.05 | small prompts, large generated UI/code |
 | fixer | 15% / 85% | 0.30 | small task briefs, large code output |
 
-Higher exponent → cost weighs more in the value score, so free/cheap models win (see Value formula below).
+Higher exponent → cost weighs more in the value score, so free/cheap models win (see Value formula below). The exponent is scaled per role by `--costbias` (default 1.0): >1 leans free, <1 leans paid, 0 = pure capability.
 
 Of course - if the tool was really dumb, free models would always win. However they tend to be
 "inconsistent" in availability/performance. So we additionally balance this with some exponents that
@@ -158,6 +158,8 @@ floor captures reliability risk).
 value(role, m) = bench(role, m) / cost(role, m) ^ roleCostWeight
 ```
 
+The exponent is multiplied by `--costbias` (default 1.0), applied per role.
+
 `roleCostWeight` is a per-role exponent. High exponent (0.70 for librarian/explorer) → cost matters
 a lot, cheap/free models win. Low exponent (0.05–0.15 for thinking/design roles) → capability
 dominates, paid models win.
@@ -197,7 +199,7 @@ refinement (a "free wins on near-tie" rule) beyond the current exponent tuning.
 ### Flags
 
 - `--provider` (opencode|copilot|all)
-- `--free` — restrict to free models
+- `--costbias <float>` — scales the cost exponent (default 1.0; >1 leans free/cheap, <1 leans paid/capable, 0 = pure capability). Replaces --free.
 - `--preset` — target preset name
 - `--no-fetch` — skip the models.dev price refresh
 - `--config` — path to opencode config
