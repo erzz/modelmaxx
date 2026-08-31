@@ -18,13 +18,23 @@ If you are using oh-my-opencode-slim like me, it can even update your configurat
 are using something else, you can map the OMO-Slim roles to those of your own harness to get those
 recommendations.
 
-# Build & run
+# Install
 
 ```bash
+# From source (requires Go 1.27+)
+go install github.com/erzz/modelmaxx@latest
+
+# Or build locally
 go build -o modelmaxx .      # IMPORTANT: not `go build ./...` (discards the binary)
-./modelmaxx recommend         # ranks all roles, auto-fetches prices from models.dev
-./modelmaxx list              # shows all models + metrics
-./modelmaxx apply --preset free --dry-run   # preview preset edits
+```
+
+# Run
+
+```bash
+modelmaxx recommend         # ranks all roles, auto-fetches prices from models.dev
+modelmaxx list              # shows all models + metrics
+modelmaxx apply --preset free --dry-run   # preview preset edits
+modelmaxx config --overwrite # generate default config at ~/.config/modelmaxx/config.yaml
 ```
 
 # Roles

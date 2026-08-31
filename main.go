@@ -708,9 +708,9 @@ func targetPreset(p string) string {
 	return "free" // opencode/zen writes the opencode-backed "free" preset block
 }
 
-// filterModels returns models for the provider, optionally restricted to free ones.
+// filterModels returns models for the provider, optionally restricted to free/paid ones.
 // provider "" or "all" returns models from every provider (cross-provider assessment).
-func filterModels(provider string, freeOnly bool) []Model {
+func filterModels(provider string, freeOnly bool, paidOnly bool) []Model {
 	prefix := ""
 	if provider != "" && provider != "all" {
 		prefix = providerPrefix(provider)
@@ -723,13 +723,16 @@ func filterModels(provider string, freeOnly bool) []Model {
 		if freeOnly && !m.Free {
 			continue
 		}
+		if paidOnly && m.Free {
+			continue
+		}
 		out = append(out, m)
 	}
 	return out
 }
 
-func recommend(provider string, freeOnly bool) map[string]Model {
-	inPreset := filterModels(provider, freeOnly)
+func recommend(provider string, freeOnly bool, paidOnly bool) map[string]Model {
+	inPreset := filterModels(provider, freeOnly, paidOnly)
 	out := map[string]Model{}
 	if len(inPreset) == 0 {
 		return out
@@ -843,8 +846,8 @@ func legendLine() string {
 	return strings.Join(lines, "\n")
 }
 
-func cmdList(provider string, role string) {
-	models := filterModels(provider, false)
+func cmdList(provider string, role string, freeOnly bool, paidOnly bool) {
+	models := filterModels(provider, freeOnly, paidOnly)
 	type row struct {
 		m Model
 		v float64
@@ -960,8 +963,8 @@ func cmdList(provider string, role string) {
 	fmt.Println()
 	fmt.Println(legendLine())
 }
-func cmdRecommend(provider string) {
-	rec := recommend(provider, false)
+func cmdRecommend(provider string, freeOnly bool, paidOnly bool) {
+	rec := recommend(provider, freeOnly, paidOnly)
 	scope := provider
 	if scope == "" || scope == "all" {
 		scope = "all providers"
@@ -1184,7 +1187,7 @@ func cmdApply(provider string, presetName string, configPath string, dryRun bool
 		if p == "" {
 			p = presetProvider(preset)
 		}
-		rec := recommend(p, fo)
+		rec := recommend(p, fo, false)
 		start, end, ok := findBlock(text, preset)
 		if !ok {
 			fmt.Fprintf(os.Stderr, "preset '%s' not found in %s\n", preset, cfg)
@@ -1365,7 +1368,7 @@ func main() {
 	args := os.Args[1:]
 	if len(args) == 0 {
 		autoFetch(false, "")
-		cmdRecommend("")
+		cmdRecommend("", false, false)
 		return
 	}
 
@@ -1422,6 +1425,8 @@ func main() {
 	dryRun := false
 	noFetch := false
 	overwrite := false
+	freeOnly := false
+	paidOnly := false
 	for i := startIdx; i < len(args); i++ {
 		a := args[i]
 		switch {
@@ -1447,6 +1452,10 @@ func main() {
 			i++
 		case strings.HasPrefix(a, "--costbias="):
 			costbias = parseCostbias(a[len("--costbias="):])
+		case a == "--free":
+			freeOnly = true
+		case a == "--paid":
+			paidOnly = true
 		case a == "--no-fetch":
 			noFetch = true
 		case a == "--config" && i+1 < len(args):
@@ -1490,9 +1499,9 @@ func main() {
 	autoFetch(noFetch, cmd)
 	switch cmd {
 	case "list":
-		cmdList(provider, role)
+		cmdList(provider, role, freeOnly, paidOnly)
 	case "recommend":
-		cmdRecommend(provider)
+		cmdRecommend(provider, freeOnly, paidOnly)
 	case "apply":
 		cmdApply(provider, presetName, configPathFlag, dryRun)
 	case "fetch":
