@@ -258,7 +258,7 @@ var costbias = 1.0
 //   - librarian:    "Mini model is fine"                 => low
 //   - explorer:     "Mini model is appropriate"          => low
 //   - designer:     UI/UX judgment + visual polish        => high
-//   - fixer:        "Mini model is intentional"          => low
+//   - fixer:        Medium reasoning for coding tasks     => medium
 var roleVariant = map[string]string{
 	"orchestrator": "medium",
 	"oracle":       "high",
@@ -266,7 +266,7 @@ var roleVariant = map[string]string{
 	"librarian":    "low",
 	"explorer":     "low",
 	"designer":     "high",
-	"fixer":        "low",
+	"fixer":        "medium",
 }
 
 // value is the role-specific bang-for-buck: merit (bench) divided by cost raised
