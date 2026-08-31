@@ -284,7 +284,7 @@
       }
     },
     {
-      "id": "opencode/gpt-5-2",
+      "id": "opencode/gpt-5.2",
       "name": "GPT 5.2",
       "provider": "openai-via-zen",
       "free": false,
@@ -304,7 +304,7 @@
       }
     },
     {
-      "id": "opencode/gpt-5-1",
+      "id": "opencode/gpt-5.1",
       "name": "GPT 5.1",
       "provider": "openai-via-zen",
       "free": false,
@@ -324,7 +324,7 @@
       }
     },
     {
-      "id": "opencode/gpt-5-1-codex-mini",
+      "id": "opencode/gpt-5.1-codex-mini",
       "name": "GPT 5.1 Codex Mini",
       "provider": "openai-via-zen",
       "free": false,
@@ -344,7 +344,7 @@
       }
     },
     {
-      "id": "opencode/gpt-5-6-sol",
+      "id": "opencode/gpt-5.6-sol",
       "name": "GPT 5.6 Sol",
       "provider": "openai-via-zen",
       "free": false,
@@ -364,7 +364,7 @@
       }
     },
     {
-      "id": "opencode/gpt-5-6-terra",
+      "id": "opencode/gpt-5.6-terra",
       "name": "GPT 5.6 Terra",
       "provider": "openai-via-zen",
       "free": false,
@@ -384,7 +384,7 @@
       }
     },
     {
-      "id": "opencode/gpt-5-6-luna",
+      "id": "opencode/gpt-5.6-luna",
       "name": "GPT 5.6 Luna",
       "provider": "openai-via-zen",
       "free": false,
@@ -744,7 +744,7 @@
       }
     },
     {
-      "id": "github-copilot/gpt-5-6-terra",
+      "id": "github-copilot/gpt-5.6-terra",
       "name": "GPT 5.6 Terra (Copilot)",
       "provider": "github-copilot",
       "free": false,
@@ -764,7 +764,7 @@
       }
     },
     {
-      "id": "github-copilot/gpt-5-6-sol",
+      "id": "github-copilot/gpt-5.6-sol",
       "name": "GPT 5.6 Sol (Copilot)",
       "provider": "github-copilot",
       "free": false,
@@ -784,7 +784,7 @@
       }
     },
     {
-      "id": "github-copilot/gpt-5-6-luna",
+      "id": "github-copilot/gpt-5.6-luna",
       "name": "GPT 5.6 Luna (Copilot)",
       "provider": "github-copilot",
       "free": false,
@@ -884,7 +884,7 @@
       }
     },
     {
-      "id": "github-copilot/gpt-5-2",
+      "id": "github-copilot/gpt-5.2",
       "name": "GPT 5.2 (Copilot)",
       "provider": "github-copilot",
       "free": false,
@@ -904,7 +904,7 @@
       }
     },
     {
-      "id": "github-copilot/gpt-5-5",
+      "id": "github-copilot/gpt-5.5",
       "name": "GPT 5.5 (Copilot)",
       "provider": "github-copilot",
       "free": false,
