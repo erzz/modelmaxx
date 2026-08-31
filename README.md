@@ -37,7 +37,8 @@ modelmaxx apply --preset free --dry-run   # preview preset edits
 modelmaxx config --overwrite # generate default config at ~/.config/modelmaxx/config.yaml
 ```
 
-See [Custom Configuration](docs/custom-config.md) for defining your own agent roles (e.g., `builder`, `reviewer`).
+See [Custom Configuration](docs/custom-config.md) for defining your own agent roles (e.g.,
+`builder`, `reviewer`).
 
 # Visual walkthrough
 
@@ -111,15 +112,15 @@ Shows exactly what would be written to your oh-my-opencode-slim config without m
 modelmaxx apply --preset copilot
 ```
 
+![Apply](docs/apply.png)
+
+Writes the recommended models into your OMO-Slim config (creates backup at `.bak`).
+
 ## 8. Just explore all models with no role
 
 ```bash
 modelmaxx list
 ```
-
-![Apply](docs/apply.png)
-
-Writes the recommended models into your OMO-Slim config (creates backup at `.bak`).
 
 # Roles
 
