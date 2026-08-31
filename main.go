@@ -800,6 +800,23 @@ func ctxScore(w float64) float64 {
 	return s
 }
 
+// normalizeSpeed converts tokens-per-second (30-1600 range) to a 0-100 score using log scale.
+func normalizeSpeed(tokPerSec float64) float64 {
+	const minTok = 30.0
+	const maxTok = 1600.0
+	if tokPerSec <= minTok {
+		return 0
+	}
+	if tokPerSec >= maxTok {
+		return 100
+	}
+	logVal := math.Log(tokPerSec)
+	logMin := math.Log(minTok)
+	logMax := math.Log(maxTok)
+	normalized := (logVal - logMin) / (logMax - logMin) * 100
+	return math.Max(0, math.Min(100, normalized))
+}
+
 func maxf(a, b float64) float64 {
 	if a > b {
 		return a
@@ -1378,6 +1395,44 @@ func fetchJSON(url string, out interface{}) error {
 	return nil
 }
 
+// fetchAAModels fetches speed data from Artificial Analysis API.
+// Requires AA_API_KEY environment variable. Returns map of slug -> tokensPerSecond.
+func fetchAAModels(apiKey string) (map[string]float64, error) {
+	type aaResponse struct {
+		Data []struct {
+			Slug        string  `json:"slug"`
+			Performance struct {
+				MedianOutputTokensPerSecond float64 `json:"median_output_tokens_per_second"`
+			} `json:"performance"`
+		} `json:"data"`
+	}
+	var resp aaResponse
+	req, err := http.NewRequest("GET", "https://artificialanalysis.ai/api/v2/language/models", nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("User-Agent", "modelmaxx/1.0")
+	req.Header.Set("x-api-key", apiKey)
+	respHTTP, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("fetch AA models: %v", err)
+	}
+	defer respHTTP.Body.Close()
+	if respHTTP.StatusCode != 200 {
+		return nil, fmt.Errorf("fetch AA models: status %d", respHTTP.StatusCode)
+	}
+	if err := json.NewDecoder(respHTTP.Body).Decode(&resp); err != nil {
+		return nil, fmt.Errorf("parse AA models: %v", err)
+	}
+	result := make(map[string]float64)
+	for _, m := range resp.Data {
+		if m.Performance.MedianOutputTokensPerSecond > 0 {
+			result[m.Slug] = m.Performance.MedianOutputTokensPerSecond
+		}
+	}
+	return result, nil
+}
+
 // shortName strips the provider prefix and returns the bare model name.
 // "opencode/gpt-5.6-luna" → "gpt-5.6-luna", "github-copilot/claude-opus-4-8" → "claude-opus-4-8"
 func shortName(id string) string {
@@ -1387,10 +1442,17 @@ func shortName(id string) string {
 	return id
 }
 
-// runFetch refreshes prices, context windows, and benchmark scores from models.dev
-// and writes models.json. It returns the counts and any error (without exiting)
-// so callers can warn instead of abort.
-func runFetch(provider string) (int, int, error) {
+// aaSlug converts our model ID format to Artificial Analysis slug format.
+// Our IDs use dots in the short name: "gpt-5.6-luna" → AA uses dashes: "gpt-5-6-luna"
+func aaSlug(id string) string {
+	sn := shortName(id)
+	return strings.ReplaceAll(sn, ".", "-")
+}
+
+// runFetch refreshes prices, context windows, benchmark scores, and speed data
+// from models.dev and Artificial Analysis. It writes models.json and returns
+// the counts and any error (without exiting) so callers can warn instead of abort.
+func runFetch(provider string) (int, int, int, error) {
 	// ---- Phase 1: pricing + context from api.json ----
 	var api map[string]struct {
 		Models map[string]struct {
@@ -1404,7 +1466,7 @@ func runFetch(provider string) (int, int, error) {
 		} `json:"models"`
 	}
 	if err := fetchJSON("https://models.dev/api.json", &api); err != nil {
-		return 0, 0, err
+		return 0, 0, 0, err
 	}
 
 	var providers []string
@@ -1506,26 +1568,49 @@ func runFetch(provider string) (int, int, error) {
 		}
 	}
 
-	if updated > 0 || ctxUpdated > 0 || benchUpdated > 0 {
+	// ---- Phase 3: speed data from Artificial Analysis ----
+	speedUpdated := 0
+	aaKey := os.Getenv("AA_API_KEY")
+	if aaKey == "" {
+		fmt.Fprintln(os.Stderr, "speed data skipped: set AA_API_KEY for Artificial Analysis speed data")
+	} else {
+		aaSpeeds, err := fetchAAModels(aaKey)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "warning: speed fetch failed: %v\n", err)
+		} else {
+			for i := range ds.Models {
+				slug := aaSlug(ds.Models[i].Id)
+				if tokPerSec, ok := aaSpeeds[slug]; ok {
+					ds.Models[i].Metrics.Speed = math.Round(normalizeSpeed(tokPerSec)*10) / 10
+					speedUpdated++
+				}
+			}
+			if speedUpdated > 0 {
+				fmt.Fprintf(os.Stderr, paint(cGreen, "applied speed scores for %d models\n"), speedUpdated)
+			}
+		}
+	}
+
+	if updated > 0 || ctxUpdated > 0 || benchUpdated > 0 || speedUpdated > 0 {
 		ds.Updated = time.Now().Format("2006-01-02")
 		out, _ := json.MarshalIndent(ds, "", "  ")
 		path := defaultModelsPath()
 		os.MkdirAll(filepath.Dir(path), 0755)
 		if err := os.WriteFile(path, append(out, '\n'), 0644); err != nil {
-			return 0, 0, fmt.Errorf("write models.json: %v", err)
+			return 0, 0, 0, fmt.Errorf("write models.json: %v", err)
 		}
 	}
-	return updated, ctxUpdated, nil
+	return updated, ctxUpdated, speedUpdated, nil
 }
 
 func cmdFetch(provider string) {
-	u, c, err := runFetch(provider)
+	u, c, s, err := runFetch(provider)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%v\n", err)
 		os.Exit(1)
 	}
-	if u > 0 || c > 0 {
-		fmt.Printf("Updated %d prices and %d context windows from models.dev\n", u, c)
+	if u > 0 || c > 0 || s > 0 {
+		fmt.Printf("Updated %d prices, %d context windows, %d speed scores from models.dev/AA\n", u, c, s)
 	} else {
 		fmt.Println("No updates applied (no matching models found).")
 	}
@@ -1537,12 +1622,12 @@ func autoFetch(noFetch bool, cmd string) {
 	if cmd == "fetch" || noFetch {
 		return
 	}
-	if u, c, err := runFetch("all"); err != nil {
+	if u, c, s, err := runFetch("all"); err != nil {
 		ds := loadDataset()
 		fmt.Fprintln(os.Stderr, paint(cRed, fmt.Sprintf("Unable to refresh data, executing based on dataset from %s", ds.Updated)))
 		fmt.Fprintln(os.Stderr, "")
-	} else if u > 0 || c > 0 {
-		fmt.Fprintln(os.Stderr, paint(cGreen, fmt.Sprintf("refreshed %d prices, %d contexts from models.dev", u, c)))
+	} else if u > 0 || c > 0 || s > 0 {
+		fmt.Fprintln(os.Stderr, paint(cGreen, fmt.Sprintf("refreshed %d prices, %d contexts, %d speeds from models.dev/AA", u, c, s)))
 		fmt.Fprintln(os.Stderr, "")
 	}
 }
