@@ -293,7 +293,7 @@ points (negligible quality difference), the cheaper/free model should win.
 
 - `--provider` (opencode|copilot|all)
 - `--costbias <float>` — scales the cost exponent (default 1.0; >1 leans free/cheap, <1 leans
-  paid/capable, 0 = pure capability). Replaces --free.
+  paid/capable, 0 = pure capability).
 - `--preset` — target preset name
 - `--no-fetch` — skip the models.dev price refresh
 - `--config` — path to opencode config
@@ -333,7 +333,8 @@ No problem, you can edit anything you want in the config at `~/.config/modelmaxx
 
 ## How can I add/remove agent/role definitions
 
-Everything is in the config `~/.config/modelmaxx/config.yaml`
+Everything is in the config `~/.config/modelmaxx/config.yaml`. See
+[Custom Configuration](docs/custom-config.md) for more information.
 
 ## License
 
