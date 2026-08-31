@@ -12,6 +12,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"gopkg.in/yaml.v3"
 )
 
 // ---- color / formatting ----
@@ -109,7 +111,211 @@ type Dataset struct {
 	Models  []Model `json:"models"`
 }
 
+// RoleConfig holds all tunable parameters for a single role.
+type RoleConfig struct {
+	Weights    map[string]float64 `yaml:"weights"`
+	CostSplit  CostSplit          `yaml:"costSplit"`
+	CostWeight float64            `yaml:"costWeight"`
+	Variant    string             `yaml:"variant"`
+}
+
+// CostSplit defines input/output token cost weighting.
+type CostSplit struct {
+	Input  float64 `yaml:"input"`
+	Output float64 `yaml:"output"`
+}
+
+// Config holds all tunable parameters for modelmaxx.
+type Config struct {
+	Version        int                   `yaml:"version"`
+	Roles          map[string]RoleConfig `yaml:"roles"`
+	FreePenalty    float64               `yaml:"freePenalty"`
+	FreeCostFloor  float64               `yaml:"freeCostFloor"`
+	VariantCostMult map[string]float64   `yaml:"variantCostMult"`
+}
+
+const currentConfigVersion = 1
+
 var roles = []string{"orchestrator", "oracle", "council", "librarian", "explorer", "designer", "fixer"}
+
+// defaultConfigPath returns the XDG config file path for modelmaxx.
+func defaultConfigPath() string {
+	home, _ := os.UserHomeDir()
+	xdg := os.Getenv("XDG_CONFIG_HOME")
+	if xdg == "" {
+		xdg = filepath.Join(home, ".config")
+	}
+	return filepath.Join(xdg, "modelmaxx", "config.yaml")
+}
+
+// loadConfig reads the config file from the XDG path.
+// Returns nil if the file doesn't exist.
+func loadConfig() *Config {
+	path := defaultConfigPath()
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil
+	}
+	var cfg Config
+	if err := yaml.Unmarshal(data, &cfg); err != nil {
+		fmt.Fprintf(os.Stderr, "warning: failed to parse config %s: %v\n", path, err)
+		return nil
+	}
+	// Version check and migration
+	if cfg.Version < currentConfigVersion {
+		fmt.Fprintf(os.Stderr, paint(cYellow, "warning: Config version %d is outdated (current: %d). Run 'modelmaxx config --overwrite' to regenerate.\n"), cfg.Version, currentConfigVersion)
+		// migrateConfig(&cfg) // Uncomment when migrations are implemented
+	} else if cfg.Version > currentConfigVersion {
+		fmt.Fprintf(os.Stderr, paint(cYellow, "warning: Config version %d is newer than supported (current: %d). Some features may not work.\n"), cfg.Version, currentConfigVersion)
+	}
+	return &cfg
+}
+
+// migrateConfig is a placeholder for future config migrations (v1 -> v2, etc.).
+// Currently a no-op; implement version-specific transformations here when needed.
+func migrateConfig(cfg *Config) {
+	// Example future migration:
+	// if cfg.Version == 1 {
+	//     // Transform v1 fields to v2
+	//     cfg.Version = 2
+	// }
+	_ = cfg
+}
+
+// generateDefaultConfig returns a Config with all current hardcoded defaults.
+func generateDefaultConfig() *Config {
+	return &Config{
+		Version: currentConfigVersion,
+		Roles: map[string]RoleConfig{
+			"orchestrator": {
+				Weights: map[string]float64{
+					"coding": 0.05, "visual": 0, "reasoning": 0.30, "speed": 0,
+					"context": 0.15, "tooluse": 0.10, "instruction": 0.30, "multimodal": 0.10,
+				},
+				CostSplit:  CostSplit{Input: 0.50, Output: 0.50},
+				CostWeight: 0.15,
+				Variant:    "medium",
+			},
+			"oracle": {
+				Weights: map[string]float64{
+					"coding": 0.15, "visual": 0, "reasoning": 0.45, "speed": 0,
+					"context": 0.20, "tooluse": 0.05, "instruction": 0.15, "multimodal": 0,
+				},
+				CostSplit:  CostSplit{Input: 0.40, Output: 0.60},
+				CostWeight: 0.10,
+				Variant:    "high",
+			},
+			"council": {
+				Weights: map[string]float64{
+					"coding": 0.15, "visual": 0, "reasoning": 0.40, "speed": 0,
+					"context": 0.20, "tooluse": 0, "instruction": 0.25, "multimodal": 0,
+				},
+				CostSplit:  CostSplit{Input: 0.60, Output: 0.40},
+				CostWeight: 0.10,
+				Variant:    "high",
+			},
+			"librarian": {
+				Weights: map[string]float64{
+					"coding": 0.15, "visual": 0, "reasoning": 0.10, "speed": 0.25,
+					"context": 0.20, "tooluse": 0.20, "instruction": 0.05, "multimodal": 0.05,
+				},
+				CostSplit:  CostSplit{Input: 0.70, Output: 0.30},
+				CostWeight: 0.70,
+				Variant:    "low",
+			},
+			"explorer": {
+				Weights: map[string]float64{
+					"coding": 0.20, "visual": 0, "reasoning": 0.10, "speed": 0.40,
+					"context": 0.05, "tooluse": 0.20, "instruction": 0.05, "multimodal": 0,
+				},
+				CostSplit:  CostSplit{Input: 0.70, Output: 0.30},
+				CostWeight: 0.70,
+				Variant:    "low",
+			},
+			"designer": {
+				Weights: map[string]float64{
+					"coding": 0.20, "visual": 0.45, "reasoning": 0.10, "speed": 0,
+					"context": 0.05, "tooluse": 0.05, "instruction": 0.05, "multimodal": 0.10,
+				},
+				CostSplit:  CostSplit{Input: 0.20, Output: 0.80},
+				CostWeight: 0.05,
+				Variant:    "high",
+			},
+			"fixer": {
+				Weights: map[string]float64{
+					"coding": 0.45, "visual": 0, "reasoning": 0.15, "speed": 0.10,
+					"context": 0.10, "tooluse": 0.05, "instruction": 0.15, "multimodal": 0,
+				},
+				CostSplit:  CostSplit{Input: 0.15, Output: 0.85},
+				CostWeight: 0.30,
+				Variant:    "medium",
+			},
+		},
+		FreePenalty:   0.7,
+		FreeCostFloor: 0.5,
+		VariantCostMult: map[string]float64{
+			"none":   1.0,
+			"low":    1.0,
+			"medium": 1.3,
+			"high":   1.8,
+		},
+	}
+}
+
+// writeConfig writes the config to the given path.
+// If overwrite is false and the file exists, it returns an error.
+func writeConfig(path string, cfg *Config, overwrite bool) error {
+	if !overwrite {
+		if _, err := os.Stat(path); err == nil {
+			return fmt.Errorf("config file already exists at %s (use --overwrite to replace)", path)
+		}
+	}
+	// Ensure directory exists
+	dir := filepath.Dir(path)
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return fmt.Errorf("failed to create config directory: %v", err)
+	}
+	data, err := yaml.Marshal(cfg)
+	if err != nil {
+		return fmt.Errorf("failed to marshal config: %v", err)
+	}
+	if err := os.WriteFile(path, data, 0644); err != nil {
+		return fmt.Errorf("failed to write config: %v", err)
+	}
+	return nil
+}
+
+// applyConfig populates the package-level variables from the loaded config.
+func applyConfig(cfg *Config) {
+	if cfg == nil {
+		return
+	}
+	if cfg.Roles != nil {
+		for role, rc := range cfg.Roles {
+			if rc.Weights != nil {
+				roleWeights[role] = rc.Weights
+			}
+			roleCostSplit[role] = [2]float64{rc.CostSplit.Input, rc.CostSplit.Output}
+			roleCostWeight[role] = rc.CostWeight
+			if rc.Variant != "" {
+				roleVariant[role] = rc.Variant
+			}
+		}
+	}
+	if cfg.FreePenalty != 0 {
+		freePenalty = cfg.FreePenalty
+	}
+	if cfg.FreeCostFloor != 0 {
+		freeCostFloor = cfg.FreeCostFloor
+	}
+	if cfg.VariantCostMult != nil {
+		variantCostMult = cfg.VariantCostMult
+	}
+}
+
+// freePenalty is the merit penalty applied to free models (default 0.7).
+// This replaces the hardcoded 0.7 in b2f().
+var freePenalty = 0.7
 
 func loadDataset() Dataset {
 	data, err := os.ReadFile("models.json")
@@ -131,7 +337,7 @@ func loadModels() []Model { return loadDataset().Models }
 // lower reliability, weaker performance) as an equivalent $/1M. It keeps free
 // models comparable to paid ones and stops them winning purely on $0 cost.
 // Tunable: lower => free wins more often; higher => paid wins more often.
-const freeCostFloor = 0.5
+var freeCostFloor = 0.5
 
 // variantCostMult estimates the token-cost multiplier of each reasoning variant
 // (the "effort" knob). Higher variants emit more reasoning tokens, so they cost
@@ -167,7 +373,7 @@ func cost(role string, m Model) float64 {
 }
 func b2f(b bool) float64 {
 	if b {
-		return 0.7
+		return freePenalty
 	}
 	return 1.0
 }
@@ -1132,7 +1338,30 @@ func parseCostbias(s string) float64 {
 	return v
 }
 
+// cmdConfig generates a default config file at the specified path.
+func cmdConfig(configPathFlag string, overwrite bool, dryRun bool) {
+	path := configPathFlag
+	if path == "" {
+		path = defaultConfigPath()
+	}
+	cfg := generateDefaultConfig()
+	if dryRun {
+		data, _ := yaml.Marshal(cfg)
+		fmt.Println(string(data))
+		return
+	}
+	if err := writeConfig(path, cfg, overwrite); err != nil {
+		fmt.Fprintf(os.Stderr, "%v\n", err)
+		os.Exit(1)
+	}
+	fmt.Printf("Created default config at %s\n", path)
+}
+
 func main() {
+	// Load config early so all commands use configured values
+	cfg := loadConfig()
+	applyConfig(cfg)
+
 	args := os.Args[1:]
 	if len(args) == 0 {
 		autoFetch(false, "")
@@ -1141,7 +1370,7 @@ func main() {
 	}
 
 	// Check if first arg is a known command
-	knownCommands := map[string]bool{"list": true, "recommend": true, "apply": true, "fetch": true}
+	knownCommands := map[string]bool{"list": true, "recommend": true, "apply": true, "fetch": true, "config": true}
 	firstArg := args[0]
 	cmd := ""
 	startIdx := 1
@@ -1153,7 +1382,7 @@ func main() {
 		cmd = "recommend"
 		startIdx = 0
 	} else {
-		fmt.Fprintf(os.Stderr, "unknown command: %s (list|recommend|apply|fetch)\n", firstArg)
+		fmt.Fprintf(os.Stderr, "unknown command: %s (list|recommend|apply|fetch|config)\n", firstArg)
 		os.Exit(1)
 	}
 
@@ -1172,13 +1401,27 @@ func main() {
 		os.Exit(1)
 	}
 
+	// Auto-generate config on first run (except for config command itself)
+	if cmd != "config" && cfg == nil {
+		defaultCfg := generateDefaultConfig()
+		path := defaultConfigPath()
+		if err := writeConfig(path, defaultCfg, false); err == nil {
+			fmt.Fprintf(os.Stderr, "Created default config at %s\n", path)
+			fmt.Fprintln(os.Stderr, "")
+			// Reload and apply the newly created config
+			cfg = loadConfig()
+			applyConfig(cfg)
+		}
+	}
+
 	provider := ""
 	providerSet := false
 	role := ""
 	presetName := ""
-	configPath := ""
+	configPathFlag := ""
 	dryRun := false
 	noFetch := false
+	overwrite := false
 	for i := startIdx; i < len(args); i++ {
 		a := args[i]
 		switch {
@@ -1207,12 +1450,19 @@ func main() {
 		case a == "--no-fetch":
 			noFetch = true
 		case a == "--config" && i+1 < len(args):
-			configPath = args[i+1]
+			configPathFlag = args[i+1]
 			i++
 		case strings.HasPrefix(a, "--config="):
-			configPath = a[len("--config="):]
+			configPathFlag = a[len("--config="):]
 		case a == "--dry-run":
 			dryRun = true
+		case a == "--path" && i+1 < len(args):
+			configPathFlag = args[i+1]
+			i++
+		case strings.HasPrefix(a, "--path="):
+			configPathFlag = a[len("--path="):]
+		case a == "--overwrite":
+			overwrite = true
 		default:
 			if strings.HasPrefix(a, "-") {
 				fmt.Fprintf(os.Stderr, "unknown flag: %s\n", a)
@@ -1244,15 +1494,17 @@ func main() {
 	case "recommend":
 		cmdRecommend(provider)
 	case "apply":
-		cmdApply(provider, presetName, configPath, dryRun)
+		cmdApply(provider, presetName, configPathFlag, dryRun)
 	case "fetch":
 		if !providerSet {
 			cmdFetch("all")
 		} else {
 			cmdFetch(provider)
 		}
+	case "config":
+		cmdConfig(configPathFlag, overwrite, dryRun)
 	default:
-		fmt.Fprintf(os.Stderr, "unknown command: %s (list|recommend|apply|fetch)\n", cmd)
+		fmt.Fprintf(os.Stderr, "unknown command: %s (list|recommend|apply|fetch|config)\n", cmd)
 		os.Exit(1)
 	}
 }
