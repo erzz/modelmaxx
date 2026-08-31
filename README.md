@@ -14,9 +14,9 @@ modelmaxx pulls the latest pricing data and benchmarks from major providers (ope
 copilot currently), weights their performance according to specific roles and recommends the best
 bang for buck for each type of agent in your harness!
 
-If you are using oh-my-opencode-slim like me, it can even update your configuration too! Even if you
-are using something else, you can map the OMO-Slim roles to those of your own harness to get those
-recommendations.
+If you are using [oh-my-opencode-slim](https://github.com/alvinunreal/oh-my-opencode-slim) like me,
+it can even update your configuration too! Even if you are using something else, you can map the
+OMO-Slim roles to those of your own harness to get those recommendations.
 
 # Install
 
@@ -47,9 +47,10 @@ modelmaxx recommend
 
 ![Default recommendation](docs/rec.png)
 
-Shows the best value model for each of the 7 roles across all providers. 6/7 roles pick GPT-5.6 Luna; Designer diverges to Claude Opus 4.8 for visual capability.
+Shows the best value model for each of the 7 roles across all providers. 6/7 roles pick GPT-5.6
+Luna; Designer diverges to Claude Opus 4.8 for visual capability.
 
-## 2. Dig into why Explorer was recommended
+## 2. Why was a model recommended for a role?
 
 ```bash
 modelmaxx list --role explorer
@@ -57,7 +58,8 @@ modelmaxx list --role explorer
 
 ![Explorer role detail](docs/list_explorer.png)
 
-Shows all models ranked for the Explorer role with metrics, costs, and the weighted scoring breakdown. Explorer weights speed (40%) and cost (exponent 0.70) heavily.
+Shows all models ranked for the Explorer role with metrics, costs, and the weighted scoring
+breakdown. Explorer weights speed (40%) and cost (exponent 0.70) heavily.
 
 ## 3. Filter to a specific provider (Copilot)
 
@@ -67,7 +69,8 @@ modelmaxx recommend --provider copilot
 
 ![Copilot provider](docs/rec_copilot.png)
 
-Same roles, but only models available via GitHub Copilot. Note: Copilot often reduces context windows, affecting scores.
+Same roles, but only models available via GitHub Copilot. Note: Copilot often reduces context
+windows, affecting scores.
 
 ## 4. Free-only recommendations
 
@@ -87,7 +90,8 @@ modelmaxx recommend --free --role designer
 
 ![Designer free](docs/rec_designer_free.png)
 
-Shows the best free model for the Designer role. Visual capability is weighted 45%, so even among free models, the one with highest visual score wins.
+Shows the best free model for the Designer role. Visual capability is weighted 45%, so even among
+free models, the one with highest visual score wins.
 
 ## 6. Preview applying to OMO-Slim config (dry-run)
 
@@ -105,6 +109,12 @@ Shows exactly what would be written to your oh-my-opencode-slim config without m
 modelmaxx apply --preset copilot
 ```
 
+## 8. Just explore all models with no role
+
+```bash
+modelmaxx list
+```
+
 ![Apply](docs/apply.png)
 
 Writes the recommended models into your OMO-Slim config (creates backup at `.bak`).
@@ -114,7 +124,7 @@ Writes the recommended models into your OMO-Slim config (creates backup at `.bak
 modelmaxx is designed with oh-my-opencode-slim in mind. But the roles are usually easily
 translatable to your own set-up too.
 
-OMO-slim have multiple pre-configured agents:
+OMO-slim has multiple pre-configured agents:
 
 | Role         | What it does                                                                        | What we weight                                         |
 | ------------ | ----------------------------------------------------------------------------------- | ------------------------------------------------------ |
@@ -128,7 +138,7 @@ OMO-slim have multiple pre-configured agents:
 
 # How modelmaxx chooses models per role
 
-Role specific capability benchmarks -> cost (including variant recommendations) -> value.
+**Role specific capability benchmarks -> cost (including variant recommendations) -> value**
 
 Take the following benchmarks for the "Oracle" agent. The role is a deep thinking reviewer and
 architect that requires lots of reasoning, a large context plus decent coding, understanding of
@@ -286,6 +296,8 @@ points (negligible quality difference), the cheaper/free model should win.
 - `--config` — path to opencode config
 - `--dry-run` — preview only
 - `--role` — limit to one role
+- `--free` — show only free (cost) models
+- `--paid` — show only paid models
 
 ## Data
 
@@ -303,6 +315,22 @@ another provider such as opencode-zen.
 This is because copilot often reduces context size (presumably for cost saving). Other providers do
 not do this! So if the context window size is an important metric for a specific role, then those
 with the original, larger context window will of course win!
+
+## When will you support other providers
+
+Working on the principle of YAGNI - when someone asks for it
+
+## When will you support config writing for other tools
+
+Working on the principle of YAGNI - when someone asks for it
+
+## I don't like your weightings
+
+No problem, you can edit anything you want in the config at `~/.config/modelmaxx/config.yaml`
+
+## How can I add/remove agent/role definitions
+
+Everything is in the config `~/.config/modelmaxx/config.yaml`
 
 ## License
 
