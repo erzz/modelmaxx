@@ -37,6 +37,8 @@ modelmaxx apply --preset free --dry-run   # preview preset edits
 modelmaxx config --overwrite # generate default config at ~/.config/modelmaxx/config.yaml
 ```
 
+See [Custom Configuration](docs/custom-config.md) for defining your own agent roles (e.g., `builder`, `reviewer`).
+
 # Visual walkthrough
 
 ## 1. Default recommendation (all providers, all roles)

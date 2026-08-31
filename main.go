@@ -291,7 +291,10 @@ func applyConfig(cfg *Config) {
 		return
 	}
 	if cfg.Roles != nil {
+		// Build roles slice from config (preserves order from YAML)
+		roles = make([]string, 0, len(cfg.Roles))
 		for role, rc := range cfg.Roles {
+			roles = append(roles, role)
 			if rc.Weights != nil {
 				roleWeights[role] = rc.Weights
 			}
