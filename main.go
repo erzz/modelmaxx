@@ -685,6 +685,109 @@ func formatRoleWeightsBoxed(role string, innerW int) []string {
 	return lines
 }
 
+// benchEntry maps a models.dev benchmark name to a modelmaxx dimension + weight.
+type benchEntry struct {
+	dim    string
+	weight float64
+}
+
+// benchMap maps models.dev benchmark names to our 8 capability dimensions.
+// Within a dimension, weights determine relative importance when averaging.
+// Coverage note: 101 unique benchmark names in models.dev across 134 models.
+// We map the highest-coverage ones per dimension. Models without mapped benchmarks
+// keep their static scores as fallback.
+var benchMap = map[string]benchEntry{
+	// ── coding — raw coding/benchmark performance ──────────────────────
+	// Coverage: SWE-Bench Pro(63), Terminal-Bench(48), Aider(31), SciCode(30),
+	//           SWE-Bench Verified(40), DeepSWE(13), LiveCodeBench(3)
+	"SWE-Bench Verified":                    {dim: "coding", weight: 1.0},
+	"SWE-Bench Pro":                         {dim: "coding", weight: 0.9},
+	"Terminal-Bench":                        {dim: "coding", weight: 0.8},
+	"Aider Polyglot":                        {dim: "coding", weight: 0.8},
+	"SWE-Bench Multilingual":                {dim: "coding", weight: 0.7},
+	"DeepSWE":                               {dim: "coding", weight: 0.7},
+	"SciCode":                               {dim: "coding", weight: 0.6},
+	"LiveCodeBench":                         {dim: "coding", weight: 0.9},
+	"Artificial Analysis Coding Agent Index": {dim: "coding", weight: 0.6},
+	// ── reasoning — complex problem-solving & architecture ──────────────
+	// Coverage: Humanity's Last Exam(33), GPQA Diamond(19), FrontierMath(11),
+	//           CharXiv Reasoning(11), ARC-AGI-2(6)
+	"Humanity's Last Exam":                  {dim: "reasoning", weight: 1.0},
+	"GPQA Diamond":                          {dim: "reasoning", weight: 1.0},
+	"FrontierMath":                          {dim: "reasoning", weight: 0.9},
+	"ARC-AGI-2":                             {dim: "reasoning", weight: 0.8},
+	"Agents' Last Exam":                     {dim: "reasoning", weight: 0.7},
+	"Artificial Analysis Intelligence Index": {dim: "reasoning", weight: 0.6},
+	// ── tooluse — reliability of calling tools / functions ─────────────
+	// Coverage: OSWorld-Verified(17), MCP Atlas(11), Toolathlon(8), AutomationBench(6)
+	"OSWorld-Verified":                      {dim: "tooluse", weight: 1.0},
+	"MCP Atlas":                             {dim: "tooluse", weight: 0.9},
+	"Toolathlon":                            {dim: "tooluse", weight: 1.0},
+	"AutomationBench":                       {dim: "tooluse", weight: 0.7},
+	"OSWorld":                               {dim: "tooluse", weight: 0.8},
+	// ── instruction — adherence to formatting, constraints, multi-step instructions ──
+	// Coverage: GDPval-AA(9), IFBench(3), IFEval(1) — thin but critical
+	"IFEval":                                {dim: "instruction", weight: 1.0},
+	"IFBench":                               {dim: "instruction", weight: 0.9},
+	"GDPval-AA":                             {dim: "instruction", weight: 0.6},
+	// ── visual — UI / visual design capability ──────────────────────────
+	// Coverage: BrowseComp(14) — web navigation, screenshot understanding, UI tasks
+	"BrowseComp":                            {dim: "visual", weight: 1.0},
+	// ── multimodal — image / audio / video understanding ────────────────
+	// Coverage: MMMU Pro(12), CharXiv Reasoning(11) — chart/figure understanding
+	"MMMU Pro":                              {dim: "multimodal", weight: 1.0},
+	"CharXiv Reasoning":                     {dim: "multimodal", weight: 0.7},
+}
+
+// benchResult is a single benchmark score from models.dev.
+type benchResult struct {
+	Name   string  `json:"name"`
+	Score  float64 `json:"score"`
+	Metric string  `json:"metric,omitempty"`
+}
+
+// benchDimScores aggregates benchmark scores into our 8 dimensions.
+// Returns a map of dimension → score (0-100), and the count of dimensions updated.
+func benchDimScores(benchmarks []benchResult) (map[string]float64, int) {
+	type agg struct {
+		sum   float64
+		wsum  float64
+		count int
+	}
+	dims := map[string]*agg{}
+	for _, b := range benchmarks {
+		e, ok := benchMap[b.Name]
+		if !ok {
+			continue
+		}
+		a, ok := dims[e.dim]
+		if !ok {
+			a = &agg{}
+			dims[e.dim] = a
+		}
+		a.sum += b.Score * e.weight
+		a.wsum += e.weight
+		a.count++
+	}
+	result := map[string]float64{}
+	updated := 0
+	for dim, a := range dims {
+		if a.wsum <= 0 {
+			continue
+		}
+		score := a.sum / a.wsum
+		if score > 100 {
+			score = 100
+		}
+		if score < 0 {
+			score = 0
+		}
+		result[dim] = score
+		updated++
+	}
+	return result, updated
+}
+
 // ctxScore normalizes a context-window size (tokens) to a 0-100 score.
 func ctxScore(w float64) float64 {
 	if w <= 0 {
@@ -1254,18 +1357,41 @@ func cmdApply(provider string, presetName string, configPath string, dryRun bool
 		paint(cGreen, " in ") + paint(cGray, cfg) +
 		paint(cGreen, "  (backup: ") + paint(cGray, cfg+".bak") + paint(cGreen, ")"))
 }
-// runFetch refreshes prices + context windows from models.dev and writes models.json.
-// It returns the counts and any error (without exiting) so callers can warn instead of abort.
-func runFetch(provider string) (int, int, error) {
-	url := "https://models.dev/api.json"
-	resp, err := http.Get(url)
+// fetchJSON is a helper that fetches and decodes a JSON URL with a User-Agent header.
+func fetchJSON(url string, out interface{}) error {
+	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		return 0, 0, fmt.Errorf("fetch failed: %v", err)
+		return err
+	}
+	req.Header.Set("User-Agent", "modelmaxx/1.0")
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("fetch %s: %v", url, err)
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != 200 {
-		return 0, 0, fmt.Errorf("fetch failed: status %d", resp.StatusCode)
+		return fmt.Errorf("fetch %s: status %d", url, resp.StatusCode)
 	}
+	if err := json.NewDecoder(resp.Body).Decode(out); err != nil {
+		return fmt.Errorf("parse %s: %v", url, err)
+	}
+	return nil
+}
+
+// shortName strips the provider prefix and returns the bare model name.
+// "opencode/gpt-5.6-luna" → "gpt-5.6-luna", "github-copilot/claude-opus-4-8" → "claude-opus-4-8"
+func shortName(id string) string {
+	if i := strings.IndexByte(id, '/'); i >= 0 {
+		return id[i+1:]
+	}
+	return id
+}
+
+// runFetch refreshes prices, context windows, and benchmark scores from models.dev
+// and writes models.json. It returns the counts and any error (without exiting)
+// so callers can warn instead of abort.
+func runFetch(provider string) (int, int, error) {
+	// ---- Phase 1: pricing + context from api.json ----
 	var api map[string]struct {
 		Models map[string]struct {
 			Cost struct {
@@ -1277,9 +1403,10 @@ func runFetch(provider string) (int, int, error) {
 			} `json:"limit"`
 		} `json:"models"`
 	}
-	if err := json.NewDecoder(resp.Body).Decode(&api); err != nil {
-		return 0, 0, fmt.Errorf("parse models.dev api: %v", err)
+	if err := fetchJSON("https://models.dev/api.json", &api); err != nil {
+		return 0, 0, err
 	}
+
 	var providers []string
 	switch provider {
 	case "opencode", "zen":
@@ -1289,9 +1416,11 @@ func runFetch(provider string) (int, int, error) {
 	default:
 		providers = []string{"opencode", "github-copilot"}
 	}
+
 	ds := loadDataset()
 	updated := 0
 	ctxUpdated := 0
+	benchUpdated := 0
 	for _, p := range providers {
 		prov, ok := api[p]
 		if !ok {
@@ -1319,7 +1448,65 @@ func runFetch(provider string) (int, int, error) {
 			}
 		}
 	}
-	if updated > 0 || ctxUpdated > 0 {
+
+	// ---- Phase 2: benchmark scores from models.json ----
+	type benchModel struct {
+		Benchmarks []benchResult `json:"benchmarks"`
+	}
+	var benchAPI map[string]benchModel
+	if err := fetchJSON("https://models.dev/models.json", &benchAPI); err != nil {
+		// Benchmarks are best-effort — warn but don't abort
+		fmt.Fprintf(os.Stderr, "warning: benchmark fetch failed: %v\n", err)
+	} else {
+		// Build a lookup from short name → canonical benchmarks.
+		// models.dev uses canonical IDs (e.g. "openai/gpt-5.6-luna"), our
+		// models.json uses provider-prefixed IDs. Match by bare name.
+		benchByName := map[string][]benchResult{}
+		for canonical, bm := range benchAPI {
+			if len(bm.Benchmarks) == 0 {
+				continue
+			}
+			sn := shortName(canonical)
+			benchByName[sn] = bm.Benchmarks
+		}
+		for i := range ds.Models {
+			sn := shortName(ds.Models[i].Id)
+			benches, ok := benchByName[sn]
+			if !ok {
+				continue
+			}
+			scores, n := benchDimScores(benches)
+			if n == 0 {
+				continue
+			}
+			// Apply benchmark scores — overwrite static values
+			if s, ok := scores["coding"]; ok {
+				ds.Models[i].Metrics.Coding = math.Round(s*10) / 10
+			}
+			if s, ok := scores["visual"]; ok {
+				ds.Models[i].Metrics.Visual = math.Round(s*10) / 10
+			}
+			if s, ok := scores["reasoning"]; ok {
+				ds.Models[i].Metrics.Reasoning = math.Round(s*10) / 10
+			}
+			if s, ok := scores["tooluse"]; ok {
+				ds.Models[i].Metrics.ToolUse = math.Round(s*10) / 10
+			}
+			if s, ok := scores["instruction"]; ok {
+				ds.Models[i].Metrics.Instruction = math.Round(s*10) / 10
+			}
+			if s, ok := scores["multimodal"]; ok {
+				ds.Models[i].Metrics.Multimodal = math.Round(s*10) / 10
+			}
+			ds.Models[i].Metrics.Source = "models.dev(bench)"
+			benchUpdated++
+		}
+		if benchUpdated > 0 {
+			fmt.Fprintf(os.Stderr, paint(cGreen, "applied benchmark scores for %d models\n"), benchUpdated)
+		}
+	}
+
+	if updated > 0 || ctxUpdated > 0 || benchUpdated > 0 {
 		ds.Updated = time.Now().Format("2006-01-02")
 		out, _ := json.MarshalIndent(ds, "", "  ")
 		path := defaultModelsPath()
