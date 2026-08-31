@@ -1,6 +1,7 @@
 package main
 
 import (
+	_ "embed"
 	"encoding/json"
 	"fmt"
 	"math"
@@ -146,6 +147,15 @@ func defaultConfigPath() string {
 		xdg = filepath.Join(home, ".config")
 	}
 	return filepath.Join(xdg, "modelmaxx", "config.yaml")
+}
+
+func defaultModelsPath() string {
+	home, _ := os.UserHomeDir()
+	xdg := os.Getenv("XDG_CONFIG_HOME")
+	if xdg == "" {
+		xdg = filepath.Join(home, ".config")
+	}
+	return filepath.Join(xdg, "modelmaxx", "models.json")
 }
 
 // loadConfig reads the config file from the XDG path.
@@ -320,12 +330,25 @@ func applyConfig(cfg *Config) {
 // This replaces the hardcoded 0.7 in b2f().
 var freePenalty = 0.7
 
+//go:embed models.json
+var defaultModelsJSON []byte
+
 func loadDataset() Dataset {
-	data, err := os.ReadFile("models.json")
+	// Lookup order: CWD (dev) → XDG config dir (installed+fetch) → embedded default
+	var data []byte
+	var err error
+
+	// 1. CWD — works when running from source tree
+	data, err = os.ReadFile("models.json")
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "models.json: %v\n", err)
-		os.Exit(1)
+		// 2. XDG config dir — populated by `modelmaxx fetch`
+		data, err = os.ReadFile(defaultModelsPath())
+		if err != nil {
+			// 3. Embedded fallback — bundled in the binary at compile time
+			data = defaultModelsJSON
+		}
 	}
+
 	var ds Dataset
 	if err := json.Unmarshal(data, &ds); err != nil {
 		fmt.Fprintf(os.Stderr, "models.json parse: %v\n", err)
@@ -1299,7 +1322,9 @@ func runFetch(provider string) (int, int, error) {
 	if updated > 0 || ctxUpdated > 0 {
 		ds.Updated = time.Now().Format("2006-01-02")
 		out, _ := json.MarshalIndent(ds, "", "  ")
-		if err := os.WriteFile("models.json", append(out, '\n'), 0644); err != nil {
+		path := defaultModelsPath()
+		os.MkdirAll(filepath.Dir(path), 0755)
+		if err := os.WriteFile(path, append(out, '\n'), 0644); err != nil {
 			return 0, 0, fmt.Errorf("write models.json: %v", err)
 		}
 	}
