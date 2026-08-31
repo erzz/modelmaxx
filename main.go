@@ -384,6 +384,75 @@ func formatCostSplit(role string) string {
 	return in + paint(cDim, " · ") + out + paint(cDim, " · ") + ex
 }
 
+// boxedHeader builds a TUI-style boxed header for list/recommend commands.
+// Returns lines ready to print.
+func boxedHeader(title, scope, note string, role string) []string {
+	const boxWidth = 72
+	innerW := boxWidth - 2 // account for "│" on each side
+
+	var lines []string
+	// Top border
+	lines = append(lines, paint(cDim, "┌"+strings.Repeat("─", boxWidth-2)+"┐"))
+	// Title line - simplified
+	var titleLine string
+	if role != "" {
+		titleLine = fmt.Sprintf(" %s %s  Role: %s", paint(cBold, paint(cCyan, title)), paint(cDim, scope), role)
+	} else {
+		titleLine = fmt.Sprintf(" %s %s", paint(cBold, paint(cCyan, title)), paint(cDim, scope))
+	}
+	lines = append(lines, paint(cDim, "│")+lpad(titleLine, innerW)+paint(cDim, "│"))
+
+	if role != "" {
+		// Separator
+		lines = append(lines, paint(cDim, "├"+strings.Repeat("─", boxWidth-2)+"┤"))
+		// Role weights section
+		lines = append(lines, paint(cDim, "│")+paint(cBold, lpad(" Role Weights", innerW))+paint(cDim, "│"))
+		weights := formatRoleWeightsBoxed(role, innerW)
+		lines = append(lines, weights...)
+		// Separator
+		lines = append(lines, paint(cDim, "├"+strings.Repeat("─", boxWidth-2)+"┤"))
+		// Cost split line
+		costLine := " Cost Split: " + formatCostSplit(role)
+		lines = append(lines, paint(cDim, "│")+lpad(costLine, innerW)+paint(cDim, "│"))
+	}
+	// Bottom border
+	lines = append(lines, paint(cDim, "└"+strings.Repeat("─", boxWidth-2)+"┘"))
+	return lines
+}
+
+// formatRoleWeightsBoxed renders role weights in a 2-column grid inside the box.
+func formatRoleWeightsBoxed(role string, innerW int) []string {
+	w := roleWeights[role]
+	type wd struct{ name string; weight float64 }
+	var ws []wd
+	for _, n := range []string{"coding", "visual", "reasoning", "speed", "context", "tooluse", "instruction", "multimodal"} {
+		if w[n] > 0 {
+			ws = append(ws, wd{n, w[n]})
+		}
+	}
+	sort.Slice(ws, func(i, j int) bool { return ws[i].weight > ws[j].weight })
+
+	var lines []string
+	colW := (innerW - 4) / 2 // 2 cols, 2 spaces between, 2 spaces padding each side
+	for i := 0; i < len(ws); i += 2 {
+		left := ""
+		right := ""
+		if i < len(ws) {
+			name := paint(metricColor[ws[i].name], ws[i].name)
+			pct := paint(cDim, fmt.Sprintf("%d%%", int(ws[i].weight*100+0.5)))
+			left = fmt.Sprintf("  %s %s", name, pct)
+		}
+		if i+1 < len(ws) {
+			name := paint(metricColor[ws[i+1].name], ws[i+1].name)
+			pct := paint(cDim, fmt.Sprintf("%d%%", int(ws[i+1].weight*100+0.5)))
+			right = fmt.Sprintf("  %s %s", name, pct)
+		}
+		line := left + strings.Repeat(" ", max(0, colW-vlen(left))) + "  " + right
+		lines = append(lines, paint(cDim, "│")+lpad(line, innerW)+paint(cDim, "│"))
+	}
+	return lines
+}
+
 // ctxScore normalizes a context-window size (tokens) to a 0-100 score.
 func ctxScore(w float64) float64 {
 	if w <= 0 {
@@ -591,12 +660,9 @@ func cmdList(provider string, role string) {
 	if role != "" {
 		note = "value = role-specific (" + role + ") score"
 	}
-	fmt.Println(paint(cBold, paint(cCyan, "# Models")) + paint(cDim, " for "+scope+" ("+note+")"))
-	if role != "" {
-		fmt.Println(paint(cDim, "role weights: ") + formatRoleWeights(role))
-		fmt.Println(paint(cDim, "cost split:  ") + formatCostSplit(role))
+	for _, line := range boxedHeader("# Models", "for "+scope, note, role) {
+		fmt.Println(line)
 	}
-	fmt.Println(paint(cDim, strings.Repeat("─", 60)))
 	fmt.Println()
 
 	// activeMetrics: which capability columns to render. With no role, show all
@@ -694,8 +760,9 @@ func cmdRecommend(provider string) {
 	if scope == "" || scope == "all" {
 		scope = "all providers"
 	}
-	fmt.Println(paint(cBold, paint(cCyan, "# Recommended models")) + paint(cDim, " for "+scope))
-	fmt.Println(paint(cDim, strings.Repeat("─", 60)))
+	for _, line := range boxedHeader("# Recommended models", "for "+scope, "cross-role recommendations", "") {
+		fmt.Println(line)
+	}
 	fmt.Println()
 
 	type rrow struct {
