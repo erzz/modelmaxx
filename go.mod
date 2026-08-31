@@ -1,4 +1,4 @@
-module modelmaxx
+module github.com/erzz/modelmaxx
 
 go 1.27
 
