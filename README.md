@@ -37,6 +37,78 @@ modelmaxx apply --preset free --dry-run   # preview preset edits
 modelmaxx config --overwrite # generate default config at ~/.config/modelmaxx/config.yaml
 ```
 
+# Visual walkthrough
+
+## 1. Default recommendation (all providers, all roles)
+
+```bash
+modelmaxx recommend
+```
+
+![Default recommendation](docs/rec.png)
+
+Shows the best value model for each of the 7 roles across all providers. 6/7 roles pick GPT-5.6 Luna; Designer diverges to Claude Opus 4.8 for visual capability.
+
+## 2. Dig into why Explorer was recommended
+
+```bash
+modelmaxx list --role explorer
+```
+
+![Explorer role detail](docs/list_explorer.png)
+
+Shows all models ranked for the Explorer role with metrics, costs, and the weighted scoring breakdown. Explorer weights speed (40%) and cost (exponent 0.70) heavily.
+
+## 3. Filter to a specific provider (Copilot)
+
+```bash
+modelmaxx recommend --provider copilot
+```
+
+![Copilot provider](docs/rec_copilot.png)
+
+Same roles, but only models available via GitHub Copilot. Note: Copilot often reduces context windows, affecting scores.
+
+## 4. Free-only recommendations
+
+```bash
+modelmaxx recommend --free
+```
+
+![Free models](docs/rec_free.png)
+
+Filters to only free models across all providers. Useful for zero-cost workflows.
+
+## 5. Free + specific role (Designer)
+
+```bash
+modelmaxx recommend --free --role designer
+```
+
+![Designer free](docs/rec_designer_free.png)
+
+Shows the best free model for the Designer role. Visual capability is weighted 45%, so even among free models, the one with highest visual score wins.
+
+## 6. Preview applying to OMO-Slim config (dry-run)
+
+```bash
+modelmaxx apply --preset copilot --dry-run
+```
+
+![Apply dry-run](docs/apply_dryrun.png)
+
+Shows exactly what would be written to your oh-my-opencode-slim config without making changes.
+
+## 7. Apply for real
+
+```bash
+modelmaxx apply --preset copilot
+```
+
+![Apply](docs/apply.png)
+
+Writes the recommended models into your OMO-Slim config (creates backup at `.bak`).
+
 # Roles
 
 modelmaxx is designed with oh-my-opencode-slim in mind. But the roles are usually easily
