@@ -1139,7 +1139,39 @@ func main() {
 		cmdRecommend("")
 		return
 	}
-	cmd := args[0]
+
+	// Check if first arg is a known command
+	knownCommands := map[string]bool{"list": true, "recommend": true, "apply": true, "fetch": true}
+	firstArg := args[0]
+	cmd := ""
+	startIdx := 1
+
+	if knownCommands[firstArg] {
+		cmd = firstArg
+	} else if strings.HasPrefix(firstArg, "-") {
+		// Default to recommend; treat all args as flags
+		cmd = "recommend"
+		startIdx = 0
+	} else {
+		fmt.Fprintf(os.Stderr, "unknown command: %s (list|recommend|apply|fetch)\n", firstArg)
+		os.Exit(1)
+	}
+
+	// Detect multiple commands (e.g., "recommend apply list")
+	var allCmds []string
+	if cmd != "" {
+		allCmds = append(allCmds, cmd)
+	}
+	for i := startIdx; i < len(args); i++ {
+		if knownCommands[args[i]] {
+			allCmds = append(allCmds, args[i])
+		}
+	}
+	if len(allCmds) > 1 {
+		fmt.Fprintf(os.Stderr, "Multiple commands (%s) not supported\n", strings.Join(allCmds, ", "))
+		os.Exit(1)
+	}
+
 	provider := ""
 	providerSet := false
 	role := ""
@@ -1147,7 +1179,7 @@ func main() {
 	configPath := ""
 	dryRun := false
 	noFetch := false
-	for i := 1; i < len(args); i++ {
+	for i := startIdx; i < len(args); i++ {
 		a := args[i]
 		switch {
 		case a == "--provider" && i+1 < len(args):
@@ -1181,6 +1213,11 @@ func main() {
 			configPath = a[len("--config="):]
 		case a == "--dry-run":
 			dryRun = true
+		default:
+			if strings.HasPrefix(a, "-") {
+				fmt.Fprintf(os.Stderr, "unknown flag: %s\n", a)
+				os.Exit(1)
+			}
 		}
 	}
 	if provider == "zen" {
