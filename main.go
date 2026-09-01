@@ -1407,7 +1407,7 @@ func fetchAAModels(apiKey string) (map[string]float64, error) {
 		} `json:"data"`
 	}
 	var resp aaResponse
-	req, err := http.NewRequest("GET", "https://artificialanalysis.ai/api/v2/language/models", nil)
+	req, err := http.NewRequest("GET", "https://artificialanalysis.ai/api/v2/language/models/free", nil)
 	if err != nil {
 		return nil, err
 	}
